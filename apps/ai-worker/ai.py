@@ -3,8 +3,6 @@ from dotenv import load_dotenv
 import json
 import os
 from ollama import Client
-from extract2 import extract_text_word_level_columns
-from prompts import get_edu_timezone_prompt, get_experience_prompt, get_skill_prompt
 from utils import clean_response
 from api import set_status, update_parsed_data
 

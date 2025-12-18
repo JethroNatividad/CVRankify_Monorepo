@@ -20,7 +20,7 @@ from scoring import (
     score_experience_years,
     tz_score,
 )
-from extract2 import extract_text_word_level_columns, normal_extract_text
+from extract2 import normal_extract_text
 
 # Load environment variables from .env file
 load_dotenv()
@@ -246,6 +246,8 @@ async def process(job, job_token):
 
 async def main():
 
+    print("Starting worker...")
+
     # Create an event that will be triggered for shutdown
     shutdown_event = asyncio.Event()
 
@@ -263,6 +265,9 @@ async def main():
         process,
         {"connection": "redis://localhost:6379"},
     )
+
+    print("Worker started successfully.")
+    print("Listening for jobs...")
 
     # Wait until the shutdown event is set
     await shutdown_event.wait()
