@@ -1,0 +1,277 @@
+from bullmq import Worker
+import asyncio
+import signal
+from minio import Minio
+from dotenv import load_dotenv
+from ai import extract_resume_data
+import os
+from api import (
+    set_status,
+    update_parsed_data,
+    update_matched_skills,
+    update_applicant_experience_relevance,
+    update_applicant_scores,
+    queue_score_resume,
+)
+import json
+from scoring import (
+    score_education_match,
+    score_skills_match,
+    score_experience_years,
+    tz_score,
+)
+from extract2 import extract_text_word_level_columns, normal_extract_text
+
+# Load environment variables from .env file
+load_dotenv()
+
+minio_client = Minio(
+    os.getenv("MINIO_ENDPOINT") + ":" + os.getenv("MINIO_PORT"),
+    access_key=os.getenv("MINIO_ACCESS_KEY"),
+    secret_key=os.getenv("MINIO_SECRET_KEY"),
+    secure=False,  # Use True for HTTPS, False for HTTP
+)
+
+
+def handle_extraction(job):
+    # job.data will include the data added to the queue
+    print(f"Processing job {job.id} with data: {job.data}")
+    # get applicantId and resumePath from job.data
+    applicant_id = job.data.get("applicantId")
+    resume_path = job.data.get("resumePath")
+
+    try:
+        response = minio_client.get_object(os.getenv("MINIO_BUCKET_NAME"), resume_path)
+        data = response.read()
+        # resume_text = extract_text_word_level_columns(data)
+        resume_text = normal_extract_text(data)
+        print("Extracted Resume Text:", resume_text)
+        resume_data = extract_resume_data(resume_text)
+        status_code, resp_json = set_status(applicant_id, "parsing")
+        print(f"Set status to parsing: {status_code}, {resp_json}")
+        status_code, resp_json = update_parsed_data(applicant_id, resume_data)
+        print(f"Updated parsed data: {status_code}, {resp_json}")
+        status_code, resp_json = set_status(applicant_id, "processing")
+        print(f"Set status to processing: {status_code}, {resp_json}")
+        # SCORE RESUME
+        status_code, resp_json = queue_score_resume(applicant_id)
+        print(f"Queued score resume: {status_code}, {resp_json}")
+    except Exception as e:
+        print(f"Error processing job {job.id}: {e}")
+    finally:
+        response.close()
+        response.release_conn()
+
+
+def parse_timezone(tz_string):
+    """
+    Converts 'GMT+5:30' or 'UTC-4' into a float offset like 5.5 or -4.0
+    """
+    if "GMT" in tz_string:
+        tz = tz_string.split("GMT")[-1]
+    elif "UTC" in tz_string:
+        tz = tz_string.split("UTC")[-1]
+    else:
+        return None  # Unknown format
+
+    # Example tz: +5:30, -4, +8
+    sign = 1
+    if tz.startswith("-"):
+        sign = -1
+        tz = tz[1:]
+    elif tz.startswith("+"):
+        tz = tz[1:]
+
+    # Split hour/min if needed
+    if ":" in tz:
+        hours, mins = tz.split(":")
+        offset = sign * (float(hours) + float(mins) / 60)
+    else:
+        offset = sign * float(tz)
+
+    return offset
+
+
+def score_applicant(job):
+    # status_code, resp_json = set_status(applicant_id, "processing")
+    # print(f"Set status to processing: {status_code}, {resp_json}")
+    print(f"Scoring applicant {job.id}")
+    applicant_id = job.data.get("applicantId")
+    applicant_data = job.data.get("applicantData")
+    job_data = job.data.get("jobData")
+
+    # json parse data
+    try:
+        skillsScore = 0
+        # skillsFeedback = ""
+        experienceScore = 0
+        # experienceFeedback = ""
+        educationScore = 0
+        # educationFeedback = ""
+        timezoneScore = 0
+        # timezoneFeedback = ""
+
+        applicant_data = json.loads(applicant_data)
+        # {'id': 19, 'createdAt': '2025-10-09T16:18:05.826Z', 'updatedAt': '2025-10-09T19:19:54.241Z', 'name': 'BOT', 'email': 'bot@email.com', 'resume': 'resumes/2025/bot-1760026685155.pdf', 'statusAI': 'processing', 'parsedHighestEducationDegree': 'Bachelor', 'parsedEducationField': 'Computer Science', 'parsedTimezone': 'GMT+8', 'parsedSkills': 'C++ Programming Language, Visual Basic 6.0, PHP Scripting Language, HTML/CSS, Mysql Database, Joomla, Adobe Photoshop (any version), Adobe Illustrator, Adobe Dreamweaver, Adobe Flash, Adobe After Effects', 'parsedYearsOfExperience': 14, 'skillsScoreAI': '0', 'experienceScoreAI': '0', 'educationScoreAI': '0', 'timezoneScoreAI': '0', 'overallScoreAI': '0', 'skillsFeedbackAI': None, 'experienceFeedbackAI': None, 'educationFeedbackAI': None, 'timezoneFeedbackAI': None, 'overallFeedbackAI': None, 'currentStage': 0, 'interviewStatus': 'pending', 'interviewNotes': None, 'jobId': 5, 'experiences': [{'id': 1, 'createdAt': '2025-10-09T19:19:54.051Z', 'updatedAt': '2025-10-09T19:19:54.051Z', 'jobTitle': 'Graphic Artist', 'startYear': '2011', 'endYear': 'Present', 'startMonth': 'April', 'endMonth': 'None', 'isRelevant': False, 'applicantId': 19}]}
+        job_data = json.loads(job_data)
+        # {'id': 5, 'createdAt': '2025-08-20T18:30:19.479Z', 'updatedAt': '2025-08-20T18:30:19.479Z', 'title': 'Data Scientist', 'description': "Join our data team as a Data Scientist to extract insights from large datasets and drive data-informed decision making across the organization. You will develop machine learning models, conduct statistical analysis, create predictive algorithms, and work with stakeholders to translate business questions into analytical solutions.\n\nThe role involves working with various data sources, building dashboards and reports, and presenting findings to both technical and non-technical audiences. We're looking for someone with strong analytical skills and the ability to work with complex datasets to solve challenging business problems.\n\nKey Responsibilities:\n- Develop and deploy machine learning models and algorithms\n- Conduct statistical analysis and data mining\n- Create data visualizations and dashboards\n- Collaborate with business stakeholders to identify opportunities\n- Design and implement A/B tests and experiments\n- Build data pipelines and ETL processes\n- Present findings and recommendations to leadership\n- Stay current with latest developments in data science and ML\n\nThis is an excellent opportunity to work with cutting-edge data science technologies and make a significant impact on business strategy and operations.", 'skills': 'Python, R, SQL, Machine Learning, TensorFlow, Pandas, NumPy, Tableau, Power BI, Statistics, A/B Testing, Data Visualization', 'yearsOfExperience': 3, 'educationDegree': 'Master', 'educationField': 'Data Science', 'timezone': 'GMT+1', 'skillsWeight': '0.5', 'experienceWeight': '0.2', 'educationWeight': '0.2', 'timezoneWeight': '0.1', 'interviewing': 0, 'interviewsNeeded': 2, 'hires': 0, 'hiresNeeded': 1, 'isOpen': True, 'createdById': 'cmekb012x0001ln2w562lrr62'}
+        print(applicant_data)
+        print(job_data)
+
+        # EDUCATION
+        education_score = score_education_match(
+            applicant_education_field=applicant_data.get("parsedEducationField"),
+            applicant_highest_degree=applicant_data.get("parsedHighestEducationDegree"),
+            job_education_field=job_data.get("educationField"),
+            job_required_degree=job_data.get("educationDegree"),
+        )
+
+        education_score = round(education_score, 2)
+        # print(f"Education Score: {education_score}")
+
+        # SKILLS
+        job_skills = job_data.get("skills").split(", ")
+        applicant_skills = applicant_data.get("parsedSkills").split(", ")
+        (skills_score, skills_match_json) = score_skills_match(
+            job_skills=job_skills, applicant_skills=applicant_skills
+        )
+        skills_match = skills_match_json.get("job_skills", [])
+        status_code, resp_json = update_matched_skills(applicant_id, skills_match)
+        print(f"Updated matched skills: {status_code}, {resp_json}")
+        print(f"Skills Score: {skills_score}")
+
+        job_title = job_data.get("title")
+        applicant_experience_periods = applicant_data.get("experiences", [])
+        job_relevant_experience_years = job_data.get("yearsOfExperience", 0)
+
+        (relevant_experience, experience_score, total_years_with_months) = (
+            score_experience_years(
+                experience_periods=applicant_experience_periods,
+                job_relevant_experience_years=job_relevant_experience_years,
+                job_title=job_title,
+            )
+        )
+
+        print(
+            f"Total Years with Months: {total_years_with_months}, Experience Score: {experience_score}, Relevant Experience: {relevant_experience}"
+        )
+
+        experience_score = round(experience_score, 2)
+
+        # print(f"Relevant Experience: {relevant_experience}")
+        # print(f"Experience Score: {experience_score}")
+        # print(f"Total Years with Months: {total_years_with_months}")
+
+        # EXPERIENCE
+        status_code, resp_json = update_applicant_experience_relevance(
+            applicant_id, relevant_experience
+        )
+        # print(f"Updated experience relevance: {status_code}, {resp_json}")
+
+        # TIMEZONE
+        applicant_timezone = applicant_data.get("parsedTimezone", "Unknown")
+        job_timezone = job_data.get("timezone", "Unknown")
+
+        if applicant_timezone != "Unknown" and job_timezone != "Unknown":
+            # applicant_tz = applicant_timezone.split("GMT")[-1]
+            # applicant_tz = float(applicant_tz)
+            applicant_tz = parse_timezone(applicant_timezone)
+            job_tz = parse_timezone(job_timezone)
+
+            if applicant_tz is not None and job_tz is not None:
+                (timezone_score, hour_gap) = tz_score(applicant_tz, job_tz)
+        # print(f"Applicant Timezone: {applicant_timezone}, Job Timezone: {job_timezone}")
+        # print(f"Timezone Score: {timezone_score}")
+
+        # VALIDATE WEIGHTS
+        skills_weight = float(job_data.get("skillsWeight", 0))
+        experience_weight = float(job_data.get("experienceWeight", 0))
+        education_weight = float(job_data.get("educationWeight", 0))
+        timezone_weight = float(job_data.get("timezoneWeight", 0))
+
+        weight_sum = (
+            skills_weight + experience_weight + education_weight + timezone_weight
+        )
+
+        if abs(weight_sum - 1.0) > 0.001:  # Allow small floating point tolerance
+            error_msg = f"Invalid weights configuration for job {job_data.get('id')}. Sum of weights must equal 1.0, got {weight_sum}"
+            print(error_msg)
+            status_code, resp_json = set_status(applicant_id, "failed")
+            print(f"Set status to failed: {status_code}, {resp_json}")
+            raise ValueError(error_msg)
+
+        # OVERALL SCORE
+        print(
+            f"Skills Score: {skills_score}, Experience Score: {experience_score}, Education Score: {education_score}, Timezone Score: {timezone_score}"
+        )
+        overall_score = (
+            float(skills_score) * skills_weight
+            + float(experience_score) * experience_weight
+            + float(education_score) * education_weight
+            + float(timezone_score) * timezone_weight
+        )
+        overall_score = round(overall_score, 2)
+
+        status_code, resp_json = update_applicant_scores(
+            applicant_id,
+            skills_score,
+            experience_score,
+            education_score,
+            timezone_score,
+            overall_score,
+            total_years_with_months,
+        )
+        print(f"Updated applicant scores: {status_code}, {resp_json}")
+        status_code, resp_json = set_status(applicant_id, "completed")
+        print(f"Set status to completed: {status_code}, {resp_json}")
+
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON data for job {job.id}: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error processing job {job.id}: {e}")
+    return None
+
+
+async def process(job, job_token):
+    print(job.name)
+    if job.name == "process-resume":
+        await asyncio.to_thread(handle_extraction, job)
+        return "ok"
+    if job.name == "score-applicant":
+        await asyncio.to_thread(score_applicant, job)
+        return "ok"
+    return None
+
+
+async def main():
+
+    # Create an event that will be triggered for shutdown
+    shutdown_event = asyncio.Event()
+
+    def signal_handler(signal, frame):
+        print("Signal received, shutting down.")
+        shutdown_event.set()
+
+    # Assign signal handlers to SIGTERM and SIGINT
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # Feel free to remove the connection parameter, if your redis runs on localhost
+    worker = Worker(
+        "cvrankify-jobs",
+        process,
+        {"connection": "redis://localhost:6379"},
+    )
+
+    # Wait until the shutdown event is set
+    await shutdown_event.wait()
+
+    # close the worker
+    print("Cleaning up worker...")
+    await worker.close()
+    print("Worker shut down successfully.")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

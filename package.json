@@ -5,7 +5,7 @@
     "apps/*"
   ],
   "scripts": {
-    "setup": "./setup-env.sh && bun install && bun run db:generate",
+    "setup": "./setup-env.sh && bun install && bun run db:generate && bun --filter ai-worker setup",
     "dev": "bun --filter \"*\" dev",
     "db:push": "bun --filter web db:push",
     "db:studio": "bun --filter web db:studio",
