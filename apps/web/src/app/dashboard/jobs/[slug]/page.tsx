@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { ExpandableDescription } from "./_components/expandable-description";
 import { ApplicantsTable } from "./_components/applicants-table";
+import { ReScoreButton } from "./_components/rescore-button";
 
 interface JobPageProps {
   params: Promise<{ slug: string }>;
@@ -151,12 +152,15 @@ const JobPage = async ({ params }: JobPageProps) => {
               {new Date(job.updatedAt).toLocaleDateString()}
             </p>
           </div>
-          <Button asChild>
-            <Link href={`/dashboard/jobs/${jobId}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
+          <div className="space-x-2">
+            <ReScoreButton jobId={jobId} />
+            <Button asChild>
+              <Link href={`/dashboard/jobs/${jobId}/edit`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Collapsible defaultOpen>
@@ -221,7 +225,7 @@ const JobPage = async ({ params }: JobPageProps) => {
                         <span className="text-sm">
                           {Math.round(
                             ((job.hiresNeeded - job.hires) / job.hiresNeeded) *
-                              100,
+                            100,
                           )}
                           % remaining
                         </span>
@@ -310,32 +314,32 @@ const JobPage = async ({ params }: JobPageProps) => {
                   (job.salaryType === "RANGE" &&
                     job.salaryRangeMin &&
                     job.salaryRangeMax)) && (
-                  <div>
-                    <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-                      <DollarSign className="mr-1 inline h-3.5 w-3.5 text-emerald-500" />
-                      {job.salaryType === "FIXED"
-                        ? "Fixed Salary"
-                        : "Salary Range"}
-                    </h4>
-                    <p className="text-sm font-medium">
-                      {job.salaryType === "FIXED" && job.fixedSalary && (
-                        <span>
-                          {job.salaryCurrency ?? "USD"}{" "}
-                          {Number(job.fixedSalary).toLocaleString()}
-                        </span>
-                      )}
-                      {job.salaryType === "RANGE" &&
-                        job.salaryRangeMin &&
-                        job.salaryRangeMax && (
+                    <div>
+                      <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+                        <DollarSign className="mr-1 inline h-3.5 w-3.5 text-emerald-500" />
+                        {job.salaryType === "FIXED"
+                          ? "Fixed Salary"
+                          : "Salary Range"}
+                      </h4>
+                      <p className="text-sm font-medium">
+                        {job.salaryType === "FIXED" && job.fixedSalary && (
                           <span>
                             {job.salaryCurrency ?? "USD"}{" "}
-                            {Number(job.salaryRangeMin).toLocaleString()} -{" "}
-                            {Number(job.salaryRangeMax).toLocaleString()}
+                            {Number(job.fixedSalary).toLocaleString()}
                           </span>
                         )}
-                    </p>
-                  </div>
-                )}
+                        {job.salaryType === "RANGE" &&
+                          job.salaryRangeMin &&
+                          job.salaryRangeMax && (
+                            <span>
+                              {job.salaryCurrency ?? "USD"}{" "}
+                              {Number(job.salaryRangeMin).toLocaleString()} -{" "}
+                              {Number(job.salaryRangeMax).toLocaleString()}
+                            </span>
+                          )}
+                      </p>
+                    </div>
+                  )}
 
                 {/* Benefits */}
                 {job.benefits && (

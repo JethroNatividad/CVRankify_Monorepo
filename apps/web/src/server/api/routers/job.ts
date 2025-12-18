@@ -483,4 +483,58 @@ export const jobRouter = createTRPCRouter({
         queued: applicantsToProcess.length,
       };
     }),
+
+  reScoreApplicants: protectedProcedure
+    .input(
+      z.object({
+        jobId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const job = await ctx.db.job.findUnique({
+        where: { id: input.jobId, createdById: ctx.session.user.id },
+        include: {
+          applicants: {
+            include: { experiences: true },
+          },
+        },
+      });
+
+      if (!job) {
+        throw new Error(
+          "Job not found or you don't have permission to access it",
+        );
+      }
+
+      // Filter applicants that are not pending and have completed processing
+      const applicantsToProcess = job.applicants.filter(
+        (applicant) => applicant.statusAI !== "pending",
+      );
+
+      if (applicantsToProcess.length === 0) {
+        throw new Error("No applicants ready for rescoring");
+      }
+
+      // Queue all applicants for rescoring
+      const queuePromises = applicantsToProcess.map(async (applicant) => {
+        // Set statusAI to 'processing'
+        await ctx.db.applicant.update({
+          where: { id: applicant.id },
+          data: { statusAI: "processing" },
+        });
+
+        return resumeQueue.add("score-applicant", {
+          applicantId: applicant.id,
+          applicantData: JSON.stringify(applicant),
+          jobData: JSON.stringify(job),
+        });
+      });
+
+      await Promise.all(queuePromises);
+
+      return {
+        success: true,
+        queued: applicantsToProcess.length,
+      };
+    }),
 });
