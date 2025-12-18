@@ -1,15 +1,7 @@
 {
   "name": "cvrankify_monorepo",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
   "workspaces": [
     "apps/*"
-  ],
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+  ]
 }
