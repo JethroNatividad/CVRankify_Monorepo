@@ -1,16 +1,44 @@
-# cvrankify_monorepo
+# CVRankify Monorepo
 
+## Prerequisites
+
+Ensure you have the following installed:
+- Docker
+- Bun
+- Ollama
+
+### System Dependencies (Linux/Debian)
+
+You will need to install Tesseract OCR and Poppler utilities:
+
+```bash
+sudo apt install tesseract-ocr libtesseract-dev poppler-utils
+```
+
+## Configuration
+
+If you are using Ollama, set the host environment variable:
+
+```bash
+export OLLAMA_HOST=http://hostname:11434
+```
 
 ## Setup
 
-```
-docker compose up -d
-```
+1. Start the database and other services:
+   ```bash
+   docker compose up -d
+   ```
 
-Setup env, dependencies, and database
-```
-bun run setup
-```
+2. Install dependencies and set up the environment/database:
+   ```bash
+   bun run setup
+   ```
 
-install ollama
-set OLLAMA_HOST=http://hostname:11434
+## Development
+
+Start the development server:
+
+```bash
+bun run dev
+```
