@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+    // Further reading:
+    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+    url      = env("DATABASE_URL")
+}
+
+model Job {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    title     String   @db.VarChar(255)
+    description String @db.Text
+    skills    String   @db.Text
+    yearsOfExperience Int      @db.TinyInt @default(0)
+    educationDegree    String   @db.VarChar(100)
+    educationField     String?  @db.VarChar(100)
+    timezone  String   @db.VarChar(100)
+    
+    // New fields for comprehensive job posting
+    employmentType     String   @db.VarChar(50) // Full-time, Part-time, Contract, Internship
+    workplaceType      String   @db.VarChar(50) // Remote, Hybrid, On-site
+    location           String?  @db.VarChar(255) // Required for Hybrid/On-site, optional for Remote
+    benefits           String?  @db.Text // e.g., health insurance, flexible hours (Optional)
+    
+    // Salary fields - new structure
+    salaryType         String?  @db.VarChar(20) // "FIXED" or "RANGE"
+    fixedSalary        Decimal? @db.Decimal(15,2) // For fixed salary type
+    salaryRangeMin     Decimal? @db.Decimal(15,2) // For range salary type - minimum
+    salaryRangeMax     Decimal? @db.Decimal(15,2) // For range salary type - maximum
+    salaryCurrency     String?  @db.VarChar(10) @default("USD") // e.g., USD, PHP, EUR
+
+    // Use DECIMAL for precise calculations
+    skillsWeight     Decimal @db.Decimal(3,2) @default(0.25)
+    experienceWeight Decimal @db.Decimal(3,2) @default(0.25)
+    educationWeight  Decimal @db.Decimal(3,2) @default(0.25)
+    timezoneWeight   Decimal @db.Decimal(3,2) @default(0.25)
+    
+    // Use smaller integer types for counters
+    interviewing     Int @db.TinyInt @default(0)
+    interviewsNeeded Int @db.TinyInt @default(1)
+    hires           Int @db.TinyInt @default(0)
+    hiresNeeded     Int @db.TinyInt @default(1)
+    
+    isOpen Boolean @default(true)
+    
+    createdBy   User   @relation(fields: [createdById], references: [id])
+    createdById String
+
+    // Add composite indexes for common queries
+    @@index([isOpen, createdAt])
+    @@index([createdById, isOpen])
+    @@index([title])
+    
+    applicants  Applicant[]
+}
+
+model Applicant {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    name      String   @db.VarChar(255)
+    email     String   @db.VarChar(255)
+    resume    String   @db.Text
+    
+    // Salary expectation (for jobs with salary range)
+    expectedSalary     Decimal? @db.Decimal(15,2)
+    
+    // Relocation willingness (for Hybrid/On-site jobs when applicant is far away)
+    willingToRelocate  Boolean? @default(false)
+    applicantLocation  String?  @db.VarChar(255) // Optional: applicant's current location
+    
+    // AI Processing Status
+    statusAI String @db.VarChar(50) @default("pending") // "pending", "parsing", "processing", "completed", "failed"
+
+    parsedHighestEducationDegree String? @db.VarChar(100)
+    parsedEducationField String? @db.VarChar(100)
+    parsedTimezone String? @db.VarChar(100)
+    parsedSkills String? @db.Text // Comma-separated list
+    parsedYearsOfExperience Decimal? @db.Decimal(6,2) @default(0.00)
+
+    // AI Scores - use DECIMAL for consistency with Job weights
+    skillsScoreAI     Decimal @db.Decimal(6,2) @default(0.00)
+    experienceScoreAI Decimal @db.Decimal(6,2) @default(0.00)
+    educationScoreAI  Decimal @db.Decimal(6,2) @default(0.00)
+    timezoneScoreAI   Decimal @db.Decimal(6,2) @default(0.00)
+    overallScoreAI    Decimal @db.Decimal(6,2) @default(0.00)
+
+    // AI Feedback - make nullable to save space when empty
+    skillsFeedbackAI     String? @db.Text
+    experienceFeedbackAI String? @db.Text
+    educationFeedbackAI  String? @db.Text
+    timezoneFeedbackAI   String? @db.Text
+    overallFeedbackAI    String? @db.Text
+
+    // Interview Tracking
+    currentStage    Int    @db.TinyInt @default(0) // 0 = application review, 1+ = interview rounds
+    interviewStatus String @db.VarChar(20) @default("pending") // "pending", "scheduled", "passed", "failed", "hired", "rejected"
+    interviewNotes  String? @db.Text
+
+    // Foreign Key
+    jobId Int
+    job   Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    
+    // Relations
+    experiences   Experience[]
+    matchedSkills MatchedSkill[]
+
+    // Optimized indexes for common queries
+    @@index([jobId, interviewStatus]) // Filter by job and status
+    @@index([jobId, currentStage])    // Filter by job and stage
+    @@index([statusAI])               // Filter by AI processing status
+    @@index([overallScoreAI])         // Sort by score
+    @@index([email])                  // Prevent duplicates/lookup
+}
+
+model Experience {
+    id         Int      @id @default(autoincrement())
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    jobTitle   String   @db.VarChar(255)
+    startYear  String   @db.VarChar(255)
+    endYear    String?  @db.VarChar(255)
+    startMonth String   @db.VarChar(255)
+    endMonth   String?  @db.VarChar(255)
+    relevant Boolean?  @default(false)
+
+    // Relation to Applicant
+    applicantId Int
+    applicant   Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+}
+
+model MatchedSkill {
+    id             Int      @id @default(autoincrement())
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+    jobSkill       String   @db.VarChar(255)
+    matchType      String   @db.VarChar(50) // "explicit", "implied", "missing"
+    applicantSkill String   @db.VarChar(255)
+    score          Decimal  @db.Decimal(4,2) @default(0.00)
+    reason         String?  @db.Text
+
+    // Relation to Applicant
+    applicantId Int
+    applicant   Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+}
+
+// Necessary for Next auth
+model Account {
+    id                       String  @id @default(cuid())
+    userId                   String
+    type                     String
+    provider                 String
+    providerAccountId        String
+    refresh_token            String? @db.Text
+    access_token             String? // @db.Text
+    expires_at               Int?
+    token_type               String?
+    scope                    String?
+    id_token                 String? // @db.Text
+    session_state            String?
+    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    refresh_token_expires_in Int?
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String?   @unique
+    emailVerified DateTime?
+    image         String?
+    password      String?
+    accounts      Account[]
+    sessions      Session[]
+    jobs          Job[]
+    isAdmin       Boolean  @default(false)
+}
+
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
+}
+
+model AppSettings {
+    id          Int      @id @default(autoincrement())
+    companyName String   @db.VarChar(255)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+}
