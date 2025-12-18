@@ -17,7 +17,7 @@ sudo apt install tesseract-ocr libtesseract-dev poppler-utils
 
 ## Configuration
 
-If you are using Ollama, set the host environment variable:
+Set the Ollama host environment variable:
 
 ```bash
 export OLLAMA_HOST=http://hostname:11434
