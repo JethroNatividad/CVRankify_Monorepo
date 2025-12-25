@@ -277,6 +277,5 @@ async def main():
     await worker.close()
     print("Worker shut down successfully.")
 
-
 if __name__ == "__main__":
     asyncio.run(main())
