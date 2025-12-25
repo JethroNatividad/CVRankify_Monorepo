@@ -4,7 +4,7 @@ import time
 
 # Test for pdf file
 def test_extract_pdf_text_from_file():
-    test_pdf_path = os.path.join(os.path.dirname(__file__), "pdf", "Applicant_1_Resume.pdf")
+    test_pdf_path = os.path.join(os.path.dirname(__file__), "pdf", "Test2.pdf")
     # calculate time taken to extract text
 
     start_time = time.time()

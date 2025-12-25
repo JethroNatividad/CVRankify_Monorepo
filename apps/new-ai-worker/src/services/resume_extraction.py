@@ -1,4 +1,4 @@
-from unstructured.partition.pdf import partition_pdf
+import pypdfium2 as pdfium
 from io import BytesIO
 
 def extract_pdf_text(path):
@@ -9,15 +9,18 @@ def extract_pdf_text(path):
         # If path is bytes, wrap it in BytesIO to create a file-like object
         if isinstance(path, bytes):
             file_obj = BytesIO(path)
-            elements = partition_pdf(
-                file=file_obj, strategy="hi_res", infer_table_structure=True
-            )
+            
         else:
-            # Otherwise treat it as a file path
-            elements = partition_pdf(
-                filename=path, strategy="hi_res", infer_table_structure=True
-            )
-        text = "\n".join([el.text for el in elements if el.text])
+            file_obj = open(path, "rb")
+            
+        pdf = pdfium.PdfDocument(file_obj)
+        num_pages = len(pdf)
+        text = ""
+        for page_number in range(num_pages):
+            page = pdf.get_page(page_number)
+            text += page.get_textpage().get_text_range()
+            text += "\n"
+        pdf.close()
 
     except Exception as e:
         print(f"Error during PDF partitioning: {e}")
