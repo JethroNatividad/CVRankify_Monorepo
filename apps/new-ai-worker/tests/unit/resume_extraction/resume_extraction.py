@@ -15,6 +15,6 @@ def test_extract_pdf_text_from_file():
     print("Extracted Text from File:")
     print(extracted_text)
 
-# Test for bytes input
-
 test_extract_pdf_text_from_file()
+
+# Test for pdf coming from minio
