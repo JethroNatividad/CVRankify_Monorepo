@@ -5,7 +5,7 @@ from src.storage.minio_client import get_minio_object
 
 # Test for pdf file
 def test_extract_pdf_text_from_file():
-    test_pdf_path = os.path.join(os.path.dirname(__file__), "pdf", "Test2.pdf")
+    test_pdf_path = os.path.join(os.path.dirname(__file__), "pdf", "Applicant_1_Resume.pdf")
     # calculate time taken to extract text
 
     start_time = time.time()
@@ -16,7 +16,7 @@ def test_extract_pdf_text_from_file():
     print("Extracted Text from File:")
     print(extracted_text)
 
-# test_extract_pdf_text_from_file()
+test_extract_pdf_text_from_file()
 
 # Test for pdf coming from minio
 
@@ -36,4 +36,4 @@ def test_extract_pdf_text_from_minio():
     print("Extracted Text from MinIO Object:")
     print(extracted_text)
 
-test_extract_pdf_text_from_minio()
+# test_extract_pdf_text_from_minio()
