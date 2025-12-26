@@ -36,3 +36,7 @@ def score_education_match(
     overall_score = (degree_score * 0.6) + (field_score * 0.4)
 
     return overall_score
+
+# TODO: Implement experience scoring function
+# TODO: Implement skills scoring function
+# TODO: Implement timezone scoring function
