@@ -24,6 +24,6 @@ def extract_pdf_text(path):
 
     except Exception as e:
         print(f"Error during PDF partitioning: {e}")
-        text = ""
+        raise ValueError(f"Failed to extract text from PDF: {str(e)}") from e
 
     return text.strip()
