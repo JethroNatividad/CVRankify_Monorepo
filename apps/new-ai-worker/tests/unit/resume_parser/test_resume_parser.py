@@ -1,7 +1,10 @@
+import pytest
 from src.services.resume_parser import parse_resume_text
-import time
 
-resume_text = """Applicant 1
+
+def test_parse_resume_text_complete_profile():
+    """Test parsing a complete resume with education, experience, and skills."""
+    resume_text = """Applicant 1
 IT Specialist / Secretary
 applicant1@email.com +6300000000 Philippines
 SUMMARY
@@ -35,9 +38,11 @@ Communication Multitasking Adaptability Time Management MS Office MS Excel
 PowerPoint Video Editing Document Filing Teamwork
 Made with Resumave"""
 
-start_time = time.time()
-
-parse_resume_text(resume_text)
-
-end_time = time.time()
-print(f"Parsing took {end_time - start_time} seconds")
+    result = parse_resume_text(resume_text)
+    
+    assert result['highestEducationDegree'] == 'Bachelor'
+    assert result['educationField'] == 'Information Technology'
+    assert result['timezone'] == 'GMT+8'
+    assert 'Communication' in result['skills']
+    assert len(result['experiencePeriods']) == 2
+    assert result['experiencePeriods'][0]['jobTitle'] == 'IT Specialist (Intern)'
