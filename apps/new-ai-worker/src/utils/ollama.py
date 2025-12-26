@@ -17,7 +17,7 @@ def clean_response(response: str) -> str:
     return response.strip()
 
 
-def query_ollama_model(model: str, content: str, think: bool = False) -> dict:
+def query_ollama_model(model: str, content: str, think: bool = False, json_output: bool = True) -> dict:
     """
     Query an Ollama model and return cleaned JSON response.
     
@@ -46,7 +46,10 @@ def query_ollama_model(model: str, content: str, think: bool = False) -> dict:
         )
         
         cleaned_response = clean_response(response["message"]["content"])
-        return json.loads(cleaned_response)
+        if json_output:
+            return json.loads(cleaned_response)
+        else:
+            return cleaned_response
         
     except json.JSONDecodeError as e:
         error_msg = f"Failed to parse JSON from model '{model}': {str(e)}"
