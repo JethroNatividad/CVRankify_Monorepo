@@ -1,4 +1,5 @@
 
+import json
 from src.config.constants import DEGREE_VALUES
 from src.utils.ollama import query_ollama_model
 
@@ -37,6 +38,32 @@ def score_education_match(
 
     return overall_score
 
+def score_skills_match(job_skills, applicant_skills):
+    # job_skills: [{name: str, weight: float}]
+    # weight of all skills must sum to 1
+
+    # applicant_skills: [str]
+
+    try:
+        payload = {
+        "job_skills": [skill['name'] for skill in job_skills],
+        "applicant_skills": applicant_skills
+        }
+
+        json_payload = json.dumps(payload, indent=2)
+
+        # {"job_skills": [{"skill": str, "match_type": str, "from_cv": str or None, "score": float, "reason": str}]}
+        scored_skills = query_ollama_model(model="skills_score:latest", content=json_payload)
+
+        # Calculate weighted score, add a new field 'weighted_score' to each skill
+        for skill in scored_skills['job_skills']:
+            skill_weight = next((s['weight'] for s in job_skills if s['name'] == skill['skill']), 0)
+            skill['weighted_score'] = skill['score'] * skill_weight
+
+        return scored_skills
+    except Exception as e:
+        raise ValueError(f"Failed to score skills match: {str(e)}") from e
+
+
 # TODO: Implement experience scoring function
-# TODO: Implement skills scoring function
 # TODO: Implement timezone scoring function
