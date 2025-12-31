@@ -65,5 +65,60 @@ def score_skills_match(job_skills, applicant_skills):
         raise ValueError(f"Failed to score skills match: {str(e)}") from e
 
 
-# TODO: Implement experience scoring function
 # TODO: Implement timezone scoring function
+def tz_score(a_hours: float, b_hours: float) -> float:
+    # convert to 0..24 circle
+    a = (a_hours + 24) % 24
+    b = (b_hours + 24) % 24
+    d = abs(a - b)
+    diff = min(d, 24 - d)  # minimal circular distance, in hours
+    score = (1 - diff / 12) * 100  # 100 = same zone, 0 = 12h apart
+    return max(0.0, min(100.0, score)), diff
+
+def parse_timezone(tz_string):
+    """
+    Converts 'GMT+5:30' or 'UTC-4' into a float offset like 5.5 or -4.0
+    """
+    if "GMT" in tz_string:
+        tz = tz_string.split("GMT")[-1]
+    elif "UTC" in tz_string:
+        tz = tz_string.split("UTC")[-1]
+    else:
+        return None  # Unknown format
+
+    # Example tz: +5:30, -4, +8
+    sign = 1
+    if tz.startswith("-"):
+        sign = -1
+        tz = tz[1:]
+    elif tz.startswith("+"):
+        tz = tz[1:]
+
+    # Split hour/min if needed
+    if ":" in tz:
+        hours, mins = tz.split(":")
+        offset = sign * (float(hours) + float(mins) / 60)
+    else:
+        offset = sign * float(tz)
+
+    return offset
+
+def score_timezone_match(applicant_timezone: str, job_timezone: str):
+    # BOTH are in "GMT+X" or "GMT-X" format str
+    try:
+        applicant_offset = parse_timezone(applicant_timezone)
+        job_offset = parse_timezone(job_timezone)
+
+        if applicant_offset is None or job_offset is None:
+            raise ValueError("Invalid timezone format")
+
+        score, diff = tz_score(applicant_offset, job_offset)
+        return {
+            "score": score,
+            "difference_in_hours": diff
+        }
+    except Exception as e:
+        raise ValueError(f"Failed to score timezone match: {str(e)}") from e
+
+
+# TODO: Implement experience scoring function
