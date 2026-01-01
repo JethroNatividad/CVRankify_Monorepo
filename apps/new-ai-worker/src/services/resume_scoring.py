@@ -2,6 +2,7 @@
 import json
 from src.config.constants import DEGREE_VALUES
 from src.utils.ollama import query_ollama_model
+from src.utils.timezone import tz_score, parse_timezone
 
 def score_education_match(
     applicant_highest_degree: str,
@@ -65,44 +66,6 @@ def score_skills_match(job_skills, applicant_skills):
         raise ValueError(f"Failed to score skills match: {str(e)}") from e
 
 
-# TODO: Implement timezone scoring function
-def tz_score(a_hours: float, b_hours: float) -> float:
-    # convert to 0..24 circle
-    a = (a_hours + 24) % 24
-    b = (b_hours + 24) % 24
-    d = abs(a - b)
-    diff = min(d, 24 - d)  # minimal circular distance, in hours
-    score = (1 - diff / 12) * 100  # 100 = same zone, 0 = 12h apart
-    return max(0.0, min(100.0, score)), diff
-
-def parse_timezone(tz_string):
-    """
-    Converts 'GMT+5:30' or 'UTC-4' into a float offset like 5.5 or -4.0
-    """
-    if "GMT" in tz_string:
-        tz = tz_string.split("GMT")[-1]
-    elif "UTC" in tz_string:
-        tz = tz_string.split("UTC")[-1]
-    else:
-        return None  # Unknown format
-
-    # Example tz: +5:30, -4, +8
-    sign = 1
-    if tz.startswith("-"):
-        sign = -1
-        tz = tz[1:]
-    elif tz.startswith("+"):
-        tz = tz[1:]
-
-    # Split hour/min if needed
-    if ":" in tz:
-        hours, mins = tz.split(":")
-        offset = sign * (float(hours) + float(mins) / 60)
-    else:
-        offset = sign * float(tz)
-
-    return offset
-
 def score_timezone_match(applicant_timezone: str, job_timezone: str):
     # BOTH are in "GMT+X" or "GMT-X" format str
     try:
@@ -121,4 +84,16 @@ def score_timezone_match(applicant_timezone: str, job_timezone: str):
         raise ValueError(f"Failed to score timezone match: {str(e)}") from e
 
 
-# TODO: Implement experience scoring function
+def score_experience_match(experience_periods: list[dict]): 
+    # takes in experience periods.
+    # "experiencePeriods": [
+#     { "startYear": "2024", "startMonth": "None", "endYear": "Present", "endMonth": "None", "jobTitle": "Computer Programmer, City Medical Center" },
+#     { "startYear": "2023", "startMonth": "March", "endYear": "2023", "endMonth": "July", "jobTitle": "Tour Siri Star Coordinator, Travel and Tours" },
+#     { "startYear": "2022", "startMonth": "June", "endYear": "2022", "endMonth": "December", "jobTitle": "Admin Aide III (Programmer), Medical Center" },
+#     { "startYear": "2021", "startMonth": "December", "endYear": "2021", "endMonth": "December", "jobTitle": "Unicef Data Manager, Vaccination Team under DOH & CHO" },
+#     { "startYear": "2020", "startMonth": "None", "endYear": "2020", "endMonth": "None", "jobTitle": "Gemzon Facebook Teleconsultation Admin & Technical Clinic Support (Part-time)" },
+#     { "startYear": "2019", "startMonth": "May", "endYear": "2021", "endMonth": "October", "jobTitle": "Programmer, West Metro Medical Center" }
+#   ]
+
+
+    pass
