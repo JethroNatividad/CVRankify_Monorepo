@@ -23,8 +23,6 @@ def test_score_skills_match():
 
     scored_skills = score_skills_match(job_skills, applicant_skills)
 
-    # {'job_skills': [{'skill': 'Python', 'match_type': 'explicit', 'from_cv': 'Python', 'score': 1.0, 'reason': 'Exact match between job skill and CV skill', 'weighted_score': 0.2}, {'skill': 'Data Analysis', 'match_type': 'implied', 'from_cv': 'Machine Learning', 'score': 0.5, 'reason': 'Machine Learning often involves data analysis techniques', 'weighted_score': 0.4}]}
-
     assert 'job_skills' in scored_skills
     assert len(scored_skills['job_skills']) == 2
     assert scored_skills['job_skills'][0]['skill'] == 'Python'
@@ -44,7 +42,7 @@ def test_score_timezone_match():
     result = score_timezone_match("GMT-4", "GMT+4")
     assert result['difference_in_hours'] == 8
     assert 0 <= result['score'] <= 100
-    
+
     result = score_timezone_match("GMT+2", "GMT+2")
     assert result['difference_in_hours'] == 0
     assert result['score'] == 100.0
