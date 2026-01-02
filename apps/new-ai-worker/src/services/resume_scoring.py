@@ -1,8 +1,9 @@
 
 import json
-from src.config.constants import DEGREE_VALUES
+from src.config.constants import DEGREE_VALUES, MONTH_MAP
 from src.utils.ollama import query_ollama_model
 from src.utils.timezone import tz_score, parse_timezone
+from datetime import datetime
 
 def score_education_match(
     applicant_highest_degree: str,
@@ -84,16 +85,92 @@ def score_timezone_match(applicant_timezone: str, job_timezone: str):
         raise ValueError(f"Failed to score timezone match: {str(e)}") from e
 
 
-def score_experience_match(experience_periods: list[dict]): 
+def score_experience_match(experience_periods: list[dict], job_relevant_experience_years: int, job_title: str): 
     # takes in experience periods.
     # "experiencePeriods": [
-#     { "startYear": "2024", "startMonth": "None", "endYear": "Present", "endMonth": "None", "jobTitle": "Computer Programmer, City Medical Center" },
-#     { "startYear": "2023", "startMonth": "March", "endYear": "2023", "endMonth": "July", "jobTitle": "Tour Siri Star Coordinator, Travel and Tours" },
-#     { "startYear": "2022", "startMonth": "June", "endYear": "2022", "endMonth": "December", "jobTitle": "Admin Aide III (Programmer), Medical Center" },
-#     { "startYear": "2021", "startMonth": "December", "endYear": "2021", "endMonth": "December", "jobTitle": "Unicef Data Manager, Vaccination Team under DOH & CHO" },
-#     { "startYear": "2020", "startMonth": "None", "endYear": "2020", "endMonth": "None", "jobTitle": "Gemzon Facebook Teleconsultation Admin & Technical Clinic Support (Part-time)" },
-#     { "startYear": "2019", "startMonth": "May", "endYear": "2021", "endMonth": "October", "jobTitle": "Programmer, West Metro Medical Center" }
-#   ]
+    #     { "startYear": "2024", "startMonth": "None", "endYear": "Present", "endMonth": "None", "jobTitle": "Computer Programmer, City Medical Center" },
+    #     { "startYear": "2023", "startMonth": "March", "endYear": "2023", "endMonth": "July", "jobTitle": "Tour Siri Star Coordinator, Travel and Tours" },
+    #     { "startYear": "2022", "startMonth": "June", "endYear": "2022", "endMonth": "December", "jobTitle": "Admin Aide III (Programmer), Medical Center" },
+    #     { "startYear": "2021", "startMonth": "December", "endYear": "2021", "endMonth": "December", "jobTitle": "Unicef Data Manager, Vaccination Team under DOH & CHO" },
+    #     { "startYear": "2020", "startMonth": "None", "endYear": "2020", "endMonth": "None", "jobTitle": "Gemzon Facebook Teleconsultation Admin & Technical Clinic Support (Part-time)" },
+    #     { "startYear": "2019", "startMonth": "May", "endYear": "2021", "endMonth": "October", "jobTitle": "Programmer, West Metro Medical Center" }
+    #   ]
+
+    try:
+        payload = {
+            "experiencePeriods": experience_periods,
+            "jobTitle": job_title,
+        }
+
+        json_payload = json.dumps(payload, indent=2)
+        # This returns the same experience periods list with an added field: relevant: bool
+
+        added_relevant_experiences = query_ollama_model(model="exp_relevance_eval:latest", content=json_payload)
+
+        experience_periods_with_relevance = added_relevant_experiences['experiencePeriods']
 
 
-    pass
+        # Calculate total relevant experience years
+
+        current_year = datetime.now().year
+        current_month = datetime.now().month
+
+        ranges = []
+        for exp in experience_periods_with_relevance:
+            if not exp.get("relevant", False):
+                continue
+
+            start_year = int(exp["startYear"])
+            start_month = MONTH_MAP.get(exp["startMonth"], 1)
+
+            if exp["endYear"] == "Present":
+                end_year = current_year
+                end_month = current_month
+            else:
+                end_year = int(exp["endYear"])
+                end_month = MONTH_MAP.get(exp["endMonth"], 1)
+
+            start_index = start_year * 12 + start_month
+            end_index = end_year * 12 + end_month
+
+            ranges.append((start_index, end_index))
+        if not ranges:
+            return {
+                "score": 0.0,
+                "years_of_experience": 0.0,
+                "experience_periods_with_relevance": experience_periods_with_relevance
+            }
+        
+        ranges.sort()
+        merged = [ranges[0]]
+
+        for start, end in ranges[1:]:
+            last_start, last_end = merged[-1]
+            if start <= last_end:  # overlap or continuous
+                merged[-1] = (last_start, max(last_end, end))
+            else:
+                merged.append((start, end))
+
+        total_months = sum(end - start for start, end in merged)
+        total_years = total_months // 12
+        remaining_months = total_months % 12
+
+        total_years_with_months = total_years + (remaining_months / 12)
+
+        # Score calculation based on required years, if more than required, give bonus
+        if total_years_with_months >= job_relevant_experience_years:
+            bonus = (total_years_with_months - job_relevant_experience_years) * 3
+            score = 100 + bonus
+        else:
+            score = (total_years_with_months / job_relevant_experience_years) * 100
+
+        # return (relevant_experience, score, total_years_with_months)
+        return {
+            "score": score,
+            "years_of_experience": total_years_with_months,
+            "experience_periods_with_relevance": experience_periods_with_relevance
+        }
+
+
+    except Exception as e:
+        raise ValueError(f"Failed to score experience match: {str(e)}") from e
