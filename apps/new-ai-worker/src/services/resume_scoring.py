@@ -96,6 +96,8 @@ def score_experience_match(experience_periods: list[dict], job_relevant_experien
     #     { "startYear": "2019", "startMonth": "May", "endYear": "2021", "endMonth": "October", "jobTitle": "Programmer, West Metro Medical Center" }
     #   ]
 
+    print(experience_periods)
+
     try:
         payload = {
             "experiencePeriods": experience_periods,
