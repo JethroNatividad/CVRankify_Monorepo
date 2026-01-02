@@ -1,6 +1,5 @@
 import pytest
-from src.services.resume_scoring import score_education_match, score_skills_match, score_timezone_match
-
+from src.services.resume_scoring import score_education_match, score_skills_match, score_timezone_match, score_experience_match
 
 def test_score_education_match_exact_match():
     """Test exact match of degree and field returns perfect score."""
@@ -46,3 +45,21 @@ def test_score_timezone_match():
     result = score_timezone_match("GMT+2", "GMT+2")
     assert result['difference_in_hours'] == 0
     assert result['score'] == 100.0
+
+def test_score_experience_match():
+    """Test experience match scoring."""
+    experience_periods = [
+        {"startYear": "2016", "endYear": "2018","startMonth": "None", "endMonth": "None", "jobTitle": "Janitor"},
+        {"startYear": "2018", "endYear": "2020", "startMonth": "None", "endMonth": "None", "jobTitle": "Software Engineer"},
+        {"startYear": "2020", "endYear": "Present", "startMonth": "None", "endMonth": "None", "jobTitle": "Senior Software Engineer"},
+    ]
+    job_relevant_experience_years = 3
+    job_title = "Software Engineer"
+
+    result = score_experience_match(experience_periods, job_relevant_experience_years, job_title)
+
+    score = result['score']
+    years_of_experience = result['years_of_experience']
+
+    assert years_of_experience == 8.0
+    assert score >= 100.0
