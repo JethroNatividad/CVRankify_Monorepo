@@ -1,3 +1,5 @@
+import pytest
+
 import os
 from src.services.resume_extraction import extract_pdf_text
 import time
@@ -15,8 +17,6 @@ def test_extract_pdf_text_from_file():
     print(f"Time taken to extract text: {time_taken} seconds")
     print("Extracted Text from File:")
     print(extracted_text)
-
-test_extract_pdf_text_from_file()
 
 # Test for pdf coming from minio
 
