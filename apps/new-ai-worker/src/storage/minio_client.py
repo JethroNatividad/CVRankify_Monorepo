@@ -1,20 +1,20 @@
-from dotenv import load_dotenv
-import os
 from minio import Minio
 
-load_dotenv()
+from src.config.settings import get_settings
+
 
 _minio_client = None
-bucket_name = os.getenv("MINIO_BUCKET_NAME")
+settings = get_settings()
+bucket_name = settings.minio_bucket_name
 
 def get_minio_client():
     
     global _minio_client
     if _minio_client is None:
         _minio_client = Minio(
-            os.getenv("MINIO_ENDPOINT") + ":" + os.getenv("MINIO_PORT"),
-            access_key=os.getenv("MINIO_ACCESS_KEY"),
-            secret_key=os.getenv("MINIO_SECRET_KEY"),
+            settings.minio_endpoint + ":" + str(settings.minio_port),
+            access_key=settings.minio_access_key,
+            secret_key=settings.minio_secret_key,
             secure=False,  # Use True for HTTPS, False for HTTP
         )
     return _minio_client
