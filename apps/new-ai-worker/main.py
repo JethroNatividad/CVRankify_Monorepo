@@ -2,7 +2,6 @@ from bullmq import Worker
 import asyncio
 import signal
 
-
 async def main():
 
     print("Starting worker...")

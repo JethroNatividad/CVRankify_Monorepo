@@ -16,6 +16,7 @@ class Settings:
         self.redis_queue_name: str = self._get_required_env("REDIS_QUEUE_NAME")
         
         self.ai_service_api_key: str = self._get_required_env("AI_SERVICE_API_KEY")
+        self.api_base_url: str = self._get_required_env("API_BASE_URL")
     
     def _get_required_env(self, key: str) -> str:
         value = os.getenv(key)
