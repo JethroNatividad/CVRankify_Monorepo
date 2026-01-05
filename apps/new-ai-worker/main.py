@@ -2,13 +2,14 @@ from bullmq import Worker
 import asyncio
 import signal
 from src.config.settings import get_settings
+from src.workers.extraction_worker import extraction_worker
 
 async def process(job, job_token):
     """Route jobs to appropriate handlers based on job name"""
     print(f"Processing job: {job.name} (ID: {job.id})")
     
     if job.name == "process-resume":
-        # await asyncio.to_thread(handle_process_resume, job)
+        await asyncio.to_thread(extraction_worker, job)
         return "ok"
     
     if job.name == "score-applicant":
