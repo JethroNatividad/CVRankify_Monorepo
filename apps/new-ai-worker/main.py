@@ -1,10 +1,31 @@
 from bullmq import Worker
 import asyncio
 import signal
+from src.config.settings import get_settings
+
+async def process(job, job_token):
+    """Route jobs to appropriate handlers based on job name"""
+    print(f"Processing job: {job.name} (ID: {job.id})")
+    
+    if job.name == "process-resume":
+        # await asyncio.to_thread(handle_process_resume, job)
+        return "ok"
+    
+    if job.name == "score-applicant":
+        # await asyncio.to_thread(handle_score_applicant, job)
+        return "ok"
+    
+    print(f"Unknown job type: {job.name}")
+    return None
 
 async def main():
-
+    
     print("Starting worker...")
+    
+    # Load settings
+    settings = get_settings()
+    redis_url = f"redis://{settings.redis_host}:{settings.redis_port}"
+    
     # Create an event that will be triggered for shutdown
     shutdown_event = asyncio.Event()
 
@@ -17,13 +38,15 @@ async def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     worker = Worker(
-        "cvrankify-jobs",
+        settings.redis_queue_name,
         process,
-        {"connection": "redis://localhost:6379"},
+        {"connection": redis_url},
     )
 
     print("Worker started successfully.")
-    print("Listening for jobs...")
+    print(f"Listening for jobs on queue: {settings.redis_queue_name}")
+    print(f"Connected to Redis at: {redis_url}")
+    
     # Wait until the shutdown event is set
     await shutdown_event.wait()
 
