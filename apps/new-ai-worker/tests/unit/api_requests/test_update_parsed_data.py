@@ -2,7 +2,7 @@ import pytest
 from src.services.api_client import APIClient
 from src.config.constants import ApplicantStatus
 
-def test_set_status_success():
+def test_update_parsed_data():
     client = APIClient()
     applicant_id = 1
 
