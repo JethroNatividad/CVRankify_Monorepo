@@ -73,3 +73,14 @@ class APIClient:
         
         logger.info(f"Updating parsed data for applicant {applicant_id}")
         return self._post(endpoint, data)
+    
+    def queue_score_resume(self, applicant_id: int) -> Tuple[int, dict]:
+        """Queue applicant resume for scoring"""
+        endpoint = "/api/trpc/applicant.queueScoring"
+        data = {
+            "json": {
+                "applicantId": applicant_id,
+            }
+        }
+        logger.info(f"Queueing score for applicant {applicant_id}")
+        return self._post(endpoint, data)
