@@ -46,3 +46,30 @@ class APIClient:
         }
         logger.info(f"Setting status for applicant {applicant_id} to {status.value}")
         return self._post(endpoint, data)
+    
+    def update_parsed_data(
+        self,
+        applicant_id: int, 
+        parsed_data: dict
+    ) -> Tuple[int, dict]:
+        """Update applicant parsed data from CV extraction"""
+        # Extract and format the parsed data
+        formatted_data = {
+            "parsedHighestEducationDegree": parsed_data.get("highestEducationDegree"),
+            "parsedEducationField": parsed_data.get("educationField"),
+            "parsedTimezone": parsed_data.get("timezone"),
+            "parsedSkills": ", ".join(parsed_data.get("skills", [])),
+            "parsedYearsOfExperience": 0,  # Currently set to 0, can be calculated later
+            "parsedExperiences": parsed_data.get("experiencePeriods", [])
+        }
+        
+        endpoint = "/api/trpc/applicant.updateParsedDataAI"
+        data = {
+            "json": {
+                "applicantId": applicant_id,
+                **formatted_data
+            }
+        }
+        
+        logger.info(f"Updating parsed data for applicant {applicant_id}")
+        return self._post(endpoint, data)
