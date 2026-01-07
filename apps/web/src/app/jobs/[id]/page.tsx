@@ -38,7 +38,7 @@ const PublicJobPage = async ({ params }: PublicJobPageProps) => {
     notFound();
   }
 
-  const skills = job.skills.split(", ").filter(Boolean);
+  const skills = job.skills;
   const applicationCount = job._count.applicants;
   const positionsRemaining = job.hiresNeeded - job.hires;
 
@@ -121,7 +121,7 @@ const PublicJobPage = async ({ params }: PublicJobPageProps) => {
                     variant="outline"
                     className="px-3 py-1 text-sm"
                   >
-                    {skill}
+                    {skill.name}
                   </Badge>
                 ))}
               </div>
