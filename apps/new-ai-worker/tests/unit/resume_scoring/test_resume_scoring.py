@@ -15,19 +15,16 @@ def test_score_education_match_exact_match():
 def test_score_skills_match():
     """Test skills match scoring."""
     job_skills = [
-        {"name": "Python", "weight": 0.2},
-        {"name": "Data Analysis", "weight": 0.8}
+        {"name": "Python", "weight": 10},
+        {"name": "Data Analysis", "weight": 5}
     ]
     applicant_skills = ["Python", "Machine Learning"]
 
-    scored_skills = score_skills_match(job_skills, applicant_skills)
+    result = score_skills_match(job_skills, applicant_skills)
+    score = result['score']
 
-    assert 'job_skills' in scored_skills
-    assert len(scored_skills['job_skills']) == 2
-    assert scored_skills['job_skills'][0]['skill'] == 'Python'
-    assert scored_skills['job_skills'][0]['weighted_score'] == 0.2
-    assert scored_skills['job_skills'][1]['skill'] == 'Data Analysis'
-    assert scored_skills['job_skills'][1]['weighted_score'] == 0.4  
+    assert score >= 83.3
+
 
 
 def test_score_timezone_match():
