@@ -21,7 +21,10 @@ interface PublicJobCardProps {
     id: number;
     title: string;
     description: string;
-    skills: string;
+    skills: {
+      name: string;
+      weight: number;
+    }[];
     yearsOfExperience: number;
     educationDegree: string;
     timezone: string;
@@ -30,7 +33,7 @@ interface PublicJobCardProps {
     createdAt: Date;
     employmentType: string;
     workplaceType: string;
-    location: string;
+    location: string | null;
     salaryRange?: string | null;
     createdBy: {
       name: string | null;
@@ -42,7 +45,7 @@ interface PublicJobCardProps {
 }
 
 const PublicJobCard = ({ job }: PublicJobCardProps) => {
-  const skills = job.skills.split(", ").filter(Boolean);
+  const skills = job.skills;
   const applicationCount = job._count.applicants;
   const positionsRemaining = job.hiresNeeded - job.hires;
 
@@ -120,7 +123,7 @@ const PublicJobCard = ({ job }: PublicJobCardProps) => {
                 variant="outline"
                 className="px-2 py-0.5 text-xs"
               >
-                {skill}
+                {skill.name}
               </Badge>
             ))}
             {skills.length > 4 && (

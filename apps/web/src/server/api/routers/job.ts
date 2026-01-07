@@ -15,7 +15,14 @@ export const jobRouter = createTRPCRouter({
         .object({
           title: z.string().min(1).max(255),
           description: z.string().min(1),
-          skills: z.string().min(1),
+          skills: z
+            .array(
+              z.object({
+                name: z.string().min(1).max(255),
+                weight: z.number().min(0),
+              }),
+            )
+            .min(1),
           yearsOfExperience: z.number().min(0).max(50),
           educationDegree: z.string().min(1).max(100),
           educationField: z.string().max(100).optional(),
@@ -116,7 +123,12 @@ export const jobRouter = createTRPCRouter({
         data: {
           title: input.title,
           description: input.description,
-          skills: input.skills,
+          skills: {
+            create: input.skills.map((skill) => ({
+              name: skill.name,
+              weight: skill.weight,
+            })),
+          },
           yearsOfExperience: input.yearsOfExperience,
           educationDegree: input.educationDegree,
           educationField: input.educationField,
@@ -138,6 +150,9 @@ export const jobRouter = createTRPCRouter({
           salaryCurrency: input.salaryCurrency,
           createdBy: { connect: { id: ctx.session.user.id } },
         },
+        include: {
+          skills: true,
+        },
       });
       return job;
     }),
@@ -153,6 +168,7 @@ export const jobRouter = createTRPCRouter({
             email: true,
           },
         },
+        skills: true,
         _count: {
           select: {
             applicants: true,
@@ -172,6 +188,10 @@ export const jobRouter = createTRPCRouter({
     // Convert Decimal fields to numbers for display
     return jobs.map((job) => ({
       ...job,
+      skills: job.skills.map((skill) => ({
+        ...skill,
+        weight: Number(skill.weight),
+      })),
       skillsWeight: Number(job.skillsWeight),
       experienceWeight: Number(job.experienceWeight),
       educationWeight: Number(job.educationWeight),
@@ -195,6 +215,7 @@ export const jobRouter = createTRPCRouter({
               email: true,
             },
           },
+          skills: true,
           applicants: {
             include: {
               experiences: true,
@@ -211,6 +232,10 @@ export const jobRouter = createTRPCRouter({
       //   Convert Decimal fields to strings
       const serializedJob: SerializedJob = {
         ...job,
+        skills: job.skills.map((skill) => ({
+          ...skill,
+          weight: skill.weight.toNumber(),
+        })),
         skillsWeight: job.skillsWeight?.toString() ?? "0",
         experienceWeight: job.experienceWeight?.toString() ?? "0",
         educationWeight: job.educationWeight?.toString() ?? "0",
@@ -248,7 +273,14 @@ export const jobRouter = createTRPCRouter({
           id: z.number(),
           title: z.string().min(1).max(255),
           description: z.string().min(1),
-          skills: z.string().min(1),
+          skills: z
+            .array(
+              z.object({
+                name: z.string().min(1).max(255),
+                weight: z.number().min(0),
+              }),
+            )
+            .min(1),
           yearsOfExperience: z.number().min(0).max(50),
           educationDegree: z.string().min(1).max(100),
           educationField: z.string().max(100).optional(),
@@ -268,7 +300,7 @@ export const jobRouter = createTRPCRouter({
             "Internship",
           ]),
           workplaceType: z.enum(["Remote", "Hybrid", "On-site"]),
-          location: z.string().min(1).max(255).optional(),
+          location: z.string().max(255).optional(),
           // New optional fields
           benefits: z.string().optional(),
           // Salary fields
@@ -346,7 +378,7 @@ export const jobRouter = createTRPCRouter({
         ),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const { id, skills, ...updateData } = input;
 
       // Verify the job belongs to the user
       const existingJob = await ctx.db.job.findUnique({
@@ -361,7 +393,19 @@ export const jobRouter = createTRPCRouter({
 
       const job = await ctx.db.job.update({
         where: { id },
-        data: updateData,
+        data: {
+          ...updateData,
+          skills: {
+            deleteMany: {},
+            create: skills.map((skill) => ({
+              name: skill.name,
+              weight: skill.weight,
+            })),
+          },
+        },
+        include: {
+          skills: true,
+        },
       });
       return job;
     }),
@@ -377,6 +421,7 @@ export const jobRouter = createTRPCRouter({
             name: true,
           },
         },
+        skills: true,
         _count: {
           select: {
             applicants: true,
@@ -388,6 +433,10 @@ export const jobRouter = createTRPCRouter({
     // Convert Decimal fields to numbers for display
     return jobs.map((job) => ({
       ...job,
+      skills: job.skills.map((skill) => ({
+        ...skill,
+        weight: Number(skill.weight),
+      })),
       skillsWeight: Number(job.skillsWeight),
       experienceWeight: Number(job.experienceWeight),
       educationWeight: Number(job.educationWeight),
@@ -409,6 +458,7 @@ export const jobRouter = createTRPCRouter({
               name: true,
             },
           },
+          skills: true,
           _count: {
             select: {
               applicants: true,
@@ -424,6 +474,10 @@ export const jobRouter = createTRPCRouter({
       // For public view, convert Decimal fields to numbers for display
       return {
         ...job,
+        skills: job.skills.map((skill) => ({
+          ...skill,
+          weight: Number(skill.weight),
+        })),
         skillsWeight: Number(job.skillsWeight),
         experienceWeight: Number(job.experienceWeight),
         educationWeight: Number(job.educationWeight),

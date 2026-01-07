@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -23,17 +23,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/app/_components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, Plus } from "lucide-react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { SerializedJob } from "~/lib/types";
+import { Badge } from "~/app/_components/ui/badge";
 
 const formSchema = z
   .object({
     title: z.string().min(1, "Title is required").max(255, "Title is too long"),
     description: z.string().min(1, "Description is required"),
-    skills: z.array(z.string()).min(1, "At least one skill is required"),
+    skills: z
+      .array(
+        z.object({
+          name: z
+            .string()
+            .min(1, "Skill name is required")
+            .max(100, "Skill name is too long"),
+          weight: z.coerce.number().min(0),
+        }),
+      )
+      .min(1, "At least one skill is required"),
     yearsOfExperience: z.coerce
       .number()
       .min(0, "Years of experience must be 0 or greater")
@@ -179,16 +190,17 @@ interface EditJobFormProps {
 
 const EditJobForm = ({ job }: EditJobFormProps) => {
   const router = useRouter();
+  const [newSkillName, setNewSkillName] = useState("");
+  const [newSkillImportance, setNewSkillImportance] = useState<string>("5");
 
   const educationField = job.educationField ? String(job.educationField) : "";
-  const skillsArray = job.skills.split(", ").filter(Boolean);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: job.title,
       description: job.description,
-      skills: skillsArray,
+      skills: job.skills,
       yearsOfExperience: job.yearsOfExperience,
       educationDegree: job.educationDegree as
         | "High School"
@@ -227,6 +239,61 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
 
   const utils = api.useUtils();
 
+  const addSkill = () => {
+    if (!newSkillName.trim()) {
+      toast.error("Please enter a skill name");
+      return;
+    }
+
+    const currentSkills = form.getValues("skills");
+
+    // Check for duplicates
+    if (
+      currentSkills.some(
+        (s) => s.name.toLowerCase() === newSkillName.trim().toLowerCase(),
+      )
+    ) {
+      toast.error("This skill has already been added");
+      return;
+    }
+
+    form.setValue("skills", [
+      ...currentSkills,
+      {
+        name: newSkillName.trim(),
+        weight: Number(newSkillImportance),
+      },
+    ]);
+
+    // Reset input
+    setNewSkillName("");
+  };
+
+  const removeSkill = (index: number) => {
+    const currentSkills = form.getValues("skills");
+    form.setValue(
+      "skills",
+      currentSkills.filter((_, i) => i !== index),
+    );
+  };
+
+  const getImportanceLabel = (weight: number) => {
+    if (weight === 10) return "Critical";
+    if (weight === 7) return "High Priority";
+    if (weight === 5) return "Standard";
+    if (weight === 2) return "Low";
+    return "Custom";
+  };
+
+  const getImportanceBadgeVariant = (
+    weight: number,
+  ): "default" | "secondary" | "outline" => {
+    if (weight === 10) return "default";
+    if (weight === 7) return "default";
+    if (weight === 5) return "secondary";
+    return "outline";
+  };
+
   const updateJob = api.job.update.useMutation({
     onSuccess: () => {
       toast.success("Job updated successfully!");
@@ -248,11 +315,10 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
       const educationField = job.educationField
         ? String(job.educationField)
         : "";
-      const skillsArray = job.skills.split(", ").filter(Boolean);
       form.reset({
         title: job.title,
         description: job.description,
-        skills: skillsArray,
+        skills: job.skills,
         yearsOfExperience: job.yearsOfExperience,
         educationDegree: job.educationDegree as
           | "High School"
@@ -291,11 +357,9 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
   }, [job, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Convert skills array to string for database storage
     const submitData = {
       id: job.id,
       ...values,
-      skills: values.skills.join(", "),
     };
 
     await updateJob.mutateAsync(submitData);
@@ -354,15 +418,103 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
               <FormItem>
                 <FormLabel>Required Skills</FormLabel>
                 <FormControl>
-                  <TagsInput
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder="Type a skill and press Enter (e.g. React, TypeScript, Node.js...)"
-                  />
+                  <div className="space-y-3">
+                    {/* Skill Input Section */}
+                    <div className="flex gap-2">
+                      <Select
+                        value={newSkillImportance}
+                        onValueChange={setNewSkillImportance}
+                      >
+                        <SelectTrigger className="w-[180px] text-left">
+                          <SelectValue placeholder="Importance" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Critical</span>
+                              <span className="text-muted-foreground text-xs">
+                                Mandatory
+                              </span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="7">
+                            <div className="flex flex-col">
+                              <span className="font-medium">High Priority</span>
+                              <span className="text-muted-foreground text-xs">
+                                Very Important
+                              </span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="5">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Standard</span>
+                              <span className="text-muted-foreground text-xs">
+                                Normal
+                              </span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="2">
+                            <div className="flex flex-col">
+                              <span className="font-medium">Low</span>
+                              <span className="text-muted-foreground text-xs">
+                                Bonus
+                              </span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        placeholder="e.g., React, Python, TypeScript..."
+                        value={newSkillName}
+                        onChange={(e) => setNewSkillName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addSkill();
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        onClick={addSkill}
+                        variant="secondary"
+                        size="icon"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Skills List */}
+                    {field.value.length > 0 && (
+                      <div className="bg-muted/50 flex flex-wrap gap-2 rounded-md border p-3">
+                        {field.value.map((skill, index) => (
+                          <Badge
+                            key={index}
+                            variant={getImportanceBadgeVariant(skill.weight)}
+                            className="flex items-center gap-2 py-1.5 pr-1 pl-3 text-sm"
+                          >
+                            <span>{skill.name}</span>
+                            <span className="text-xs opacity-70">
+                              ({getImportanceLabel(skill.weight)})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeSkill(index)}
+                              className="hover:bg-background/20 ml-1 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </FormControl>
                 <FormDescription>
-                  Type skills and press Enter or comma to add them. Click X to
-                  remove.
+                  Add skills and set their importance level. Critical skills are
+                  must-haves, High Priority are very important, Standard are
+                  normal requirements, and Low are bonuses.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

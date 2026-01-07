@@ -22,7 +22,7 @@ const PublicJobs = () => {
       (job) =>
         job.title.toLowerCase().includes(term) ||
         job.description.toLowerCase().includes(term) ||
-        job.skills.toLowerCase().includes(term) ||
+        job.skills.some((skill) => skill.name.toLowerCase().includes(term)) ||
         job.createdBy.name?.toLowerCase().includes(term),
     );
   }, [jobs, searchTerm]);

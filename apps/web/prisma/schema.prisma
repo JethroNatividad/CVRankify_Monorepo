@@ -14,13 +14,24 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+model JobSkill {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    name String   @db.VarChar(255)
+    weight Decimal  @db.Decimal(4,2) @default(0.00)
+
+    jobId Int
+    job   Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
 model Job {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     title     String   @db.VarChar(255)
     description String @db.Text
-    skills    String   @db.Text
+    skills JobSkill[]
     yearsOfExperience Int      @db.TinyInt @default(0)
     educationDegree    String   @db.VarChar(100)
     educationField     String?  @db.VarChar(100)

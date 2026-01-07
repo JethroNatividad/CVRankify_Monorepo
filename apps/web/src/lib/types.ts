@@ -62,6 +62,12 @@ export type Job = Prisma.JobGetPayload<{
         email: true;
       };
     };
+    skills: {
+      select: {
+        name: true;
+        weight: true;
+      };
+    };
   };
 }>;
 
@@ -79,6 +85,7 @@ export type SerializedJob = Omit<
   | "salaryRangeMin"
   | "salaryRangeMax"
   | "applicants"
+  | "skills"
 > & {
   skillsWeight: string;
   experienceWeight: string;
@@ -88,4 +95,8 @@ export type SerializedJob = Omit<
   salaryRangeMin: string | null;
   salaryRangeMax: string | null;
   applicants: SerializedApplicantWithIncludes[];
+  skills: {
+    name: string;
+    weight: number;
+  }[];
 };

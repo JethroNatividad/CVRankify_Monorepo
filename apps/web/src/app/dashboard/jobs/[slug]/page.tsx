@@ -118,7 +118,7 @@ const JobPage = async ({ params }: JobPageProps) => {
     );
   }
 
-  const skills = job.skills.split(", ").filter(Boolean);
+  const skills = job.skills;
   const applicationCount = job.applicants?.length || 0;
 
   return (
@@ -225,7 +225,7 @@ const JobPage = async ({ params }: JobPageProps) => {
                         <span className="text-sm">
                           {Math.round(
                             ((job.hiresNeeded - job.hires) / job.hiresNeeded) *
-                            100,
+                              100,
                           )}
                           % remaining
                         </span>
@@ -247,7 +247,7 @@ const JobPage = async ({ params }: JobPageProps) => {
                           variant="outline"
                           className="px-2 py-0.5 text-xs font-medium"
                         >
-                          {skill}
+                          {skill.name}
                         </Badge>
                       ))}
                     </div>
@@ -314,32 +314,32 @@ const JobPage = async ({ params }: JobPageProps) => {
                   (job.salaryType === "RANGE" &&
                     job.salaryRangeMin &&
                     job.salaryRangeMax)) && (
-                    <div>
-                      <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-                        <DollarSign className="mr-1 inline h-3.5 w-3.5 text-emerald-500" />
-                        {job.salaryType === "FIXED"
-                          ? "Fixed Salary"
-                          : "Salary Range"}
-                      </h4>
-                      <p className="text-sm font-medium">
-                        {job.salaryType === "FIXED" && job.fixedSalary && (
+                  <div>
+                    <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+                      <DollarSign className="mr-1 inline h-3.5 w-3.5 text-emerald-500" />
+                      {job.salaryType === "FIXED"
+                        ? "Fixed Salary"
+                        : "Salary Range"}
+                    </h4>
+                    <p className="text-sm font-medium">
+                      {job.salaryType === "FIXED" && job.fixedSalary && (
+                        <span>
+                          {job.salaryCurrency ?? "USD"}{" "}
+                          {Number(job.fixedSalary).toLocaleString()}
+                        </span>
+                      )}
+                      {job.salaryType === "RANGE" &&
+                        job.salaryRangeMin &&
+                        job.salaryRangeMax && (
                           <span>
                             {job.salaryCurrency ?? "USD"}{" "}
-                            {Number(job.fixedSalary).toLocaleString()}
+                            {Number(job.salaryRangeMin).toLocaleString()} -{" "}
+                            {Number(job.salaryRangeMax).toLocaleString()}
                           </span>
                         )}
-                        {job.salaryType === "RANGE" &&
-                          job.salaryRangeMin &&
-                          job.salaryRangeMax && (
-                            <span>
-                              {job.salaryCurrency ?? "USD"}{" "}
-                              {Number(job.salaryRangeMin).toLocaleString()} -{" "}
-                              {Number(job.salaryRangeMax).toLocaleString()}
-                            </span>
-                          )}
-                      </p>
-                    </div>
-                  )}
+                    </p>
+                  </div>
+                )}
 
                 {/* Benefits */}
                 {job.benefits && (
