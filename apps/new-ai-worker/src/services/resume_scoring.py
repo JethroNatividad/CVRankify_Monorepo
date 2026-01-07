@@ -42,7 +42,7 @@ def score_education_match(
 
 def score_skills_match(job_skills, applicant_skills):
     # job_skills: [{name: str, weight: float}]
-    # weight of all skills must sum to 1
+    # This is a weighed average match score, the weight is a points assigned to each skill based on its importance to the job.
 
     # applicant_skills: [str]
 
@@ -57,12 +57,40 @@ def score_skills_match(job_skills, applicant_skills):
         # {"job_skills": [{"skill": str, "match_type": str, "from_cv": str or None, "score": float, "reason": str}]}
         scored_skills = query_ollama_model(model="skills_score:latest", content=json_payload)
 
-        # Calculate weighted score, add a new field 'weighted_score' to each skill
-        for skill in scored_skills['job_skills']:
-            skill_weight = next((s['weight'] for s in job_skills if s['name'] == skill['skill']), 0)
-            skill['weighted_score'] = skill['score'] * skill_weight
 
-        return scored_skills
+        job_weight_map = {skill['name']: skill['weight'] for skill in job_skills}
+
+        # 2. Calculate Total Possible Points
+        total_job_skills_points = sum(job_weight_map.values())
+
+        # 3. Calculate Matched Points
+        total_matched_skill_points = 0.0
+
+        final_score = 0.0
+        
+        for match in scored_skills["job_skills"]:
+            skill_name = match['skill']
+            
+            # Get weight from the map
+            weight = job_weight_map.get(skill_name, 0)
+            
+            # Multiply Weight by the Semantic Match Score (1.0 or 0.5)
+            # 10 * 1.0 = 10
+            # 5 * 0.5 = 2.5
+            points_earned = weight * match['score']
+            
+            total_matched_skill_points += points_earned
+
+        # 4. Final Calculation
+        if total_job_skills_points > 0:
+            final_score = (total_matched_skill_points / total_job_skills_points) * 100
+        else:
+            final_score = 0
+
+        return {
+            "score": final_score,
+            "scored_skills": scored_skills['job_skills']
+        }
     except Exception as e:
         raise ValueError(f"Failed to score skills match: {str(e)}") from e
 
