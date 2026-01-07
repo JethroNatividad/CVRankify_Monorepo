@@ -25,7 +25,10 @@ interface JobCardProps {
     id: number;
     title: string;
     description: string;
-    skills: string;
+    skills: {
+      name: string;
+      weight: number;
+    }[];
     yearsOfExperience: number;
     educationDegree: string;
     educationField: string | null;
@@ -46,7 +49,7 @@ interface JobCardProps {
 }
 
 export default function JobCard({ job }: JobCardProps) {
-  const skillsArray = job.skills.split(", ").filter(Boolean);
+  const skillsArray = job.skills;
 
   return (
     <Card className="h-full transition-shadow hover:shadow-lg">
@@ -85,7 +88,7 @@ export default function JobCard({ job }: JobCardProps) {
           <div className="flex flex-wrap gap-1">
             {skillsArray.slice(0, 3).map((skill, index) => (
               <Badge key={index} variant="outline" className="text-xs">
-                {skill.trim()}
+                {skill.name.trim()}
               </Badge>
             ))}
             {skillsArray.length > 3 && (
