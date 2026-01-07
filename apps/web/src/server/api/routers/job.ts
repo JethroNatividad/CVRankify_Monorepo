@@ -19,7 +19,7 @@ export const jobRouter = createTRPCRouter({
             .array(
               z.object({
                 name: z.string().min(1).max(255),
-                weight: z.number().min(0).max(1),
+                weight: z.number().min(0),
               }),
             )
             .min(1),
@@ -234,7 +234,7 @@ export const jobRouter = createTRPCRouter({
         ...job,
         skills: job.skills.map((skill) => ({
           ...skill,
-          weight: skill.weight.toString() ?? "0",
+          weight: skill.weight.toNumber(),
         })),
         skillsWeight: job.skillsWeight?.toString() ?? "0",
         experienceWeight: job.experienceWeight?.toString() ?? "0",
@@ -277,7 +277,7 @@ export const jobRouter = createTRPCRouter({
             .array(
               z.object({
                 name: z.string().min(1).max(255),
-                weight: z.number().min(0).max(1),
+                weight: z.number().min(0),
               }),
             )
             .min(1),
@@ -300,7 +300,7 @@ export const jobRouter = createTRPCRouter({
             "Internship",
           ]),
           workplaceType: z.enum(["Remote", "Hybrid", "On-site"]),
-          location: z.string().min(1).max(255).optional(),
+          location: z.string().max(255).optional(),
           // New optional fields
           benefits: z.string().optional(),
           // Salary fields
