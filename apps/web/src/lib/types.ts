@@ -97,6 +97,6 @@ export type SerializedJob = Omit<
   applicants: SerializedApplicantWithIncludes[];
   skills: {
     name: string;
-    weight: string;
+    weight: number;
   }[];
 };
