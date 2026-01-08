@@ -366,6 +366,7 @@ export const applicantRouter = createTRPCRouter({
 
       const job = await ctx.db.job.findUnique({
         where: { id: applicant.jobId },
+        include: { skills: true },
       });
 
       console.log(applicant);
@@ -531,5 +532,5 @@ export const applicantRouter = createTRPCRouter({
       });
 
       return { success: true };
-    })
+    }),
 });
