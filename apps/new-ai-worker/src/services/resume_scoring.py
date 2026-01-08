@@ -58,7 +58,7 @@ def score_skills_match(job_skills, applicant_skills):
         scored_skills = query_ollama_model(model="skills_score:latest", content=json_payload)
 
 
-        job_weight_map = {skill['name']: skill['weight'] for skill in job_skills}
+        job_weight_map = {skill['name']: float(skill['weight']) for skill in job_skills}
 
         # 2. Calculate Total Possible Points
         total_job_skills_points = sum(job_weight_map.values())
@@ -70,6 +70,7 @@ def score_skills_match(job_skills, applicant_skills):
         
         for match in scored_skills["job_skills"]:
             skill_name = match['skill']
+            match_score = float(match['score'])
             
             # Get weight from the map
             weight = job_weight_map.get(skill_name, 0)
@@ -77,7 +78,7 @@ def score_skills_match(job_skills, applicant_skills):
             # Multiply Weight by the Semantic Match Score (1.0 or 0.5)
             # 10 * 1.0 = 10
             # 5 * 0.5 = 2.5
-            points_earned = weight * match['score']
+            points_earned = weight * match_score
             
             total_matched_skill_points += points_earned
 
@@ -87,9 +88,21 @@ def score_skills_match(job_skills, applicant_skills):
         else:
             final_score = 0
 
+        scored_skills_payload = [
+                {
+                    "jobSkill": entry["skill"],
+                    "matchType": entry["match_type"],
+                    "applicantSkill": (
+                        entry["from_cv"] if entry["from_cv"] is not None else ""
+                    ),
+                    "score": entry["score"],
+                    "reason": entry.get("reason", ""),
+                } for entry in scored_skills["job_skills"]
+            ]
+
         return {
             "score": final_score,
-            "scored_skills": scored_skills['job_skills']
+            "scored_skills": scored_skills_payload
         }
     except Exception as e:
         raise ValueError(f"Failed to score skills match: {str(e)}") from e

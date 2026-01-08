@@ -551,6 +551,7 @@ export const jobRouter = createTRPCRouter({
           applicants: {
             include: { experiences: true },
           },
+          skills: true,
         },
       });
 
