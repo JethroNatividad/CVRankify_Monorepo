@@ -112,6 +112,42 @@ class APIClient:
         logger.info(f"Updating matched skills for applicant {applicant_id} ({len(matched_skills)} skills)")
         return self._post(endpoint, data)
     
+    def update_applicant_experience_relevance(
+        self, 
+        applicant_id: int, 
+        experiences: list[dict]
+    ) -> Tuple[int, dict]:
+        """
+        Update experience relevance for an applicant.
+
+        Args:
+            applicant_id: The ID of the applicant
+            experiences: List of experiences, each containing:
+                - id: int (experience ID)
+                - relevant: bool
+
+        Example:
+            experiences = [
+                {
+                    "id": 123,
+                    "relevant": True
+                },
+                {
+                    "id": 124,
+                    "relevant": False
+                }
+            ]
+        """
+        endpoint = "/api/trpc/applicant.updateApplicantExperienceRelevanceAI"
+        data = {
+            "json": {
+                "applicantId": applicant_id,
+                "experiences": experiences,
+            }
+        }
+        logger.info(f"Updating experience relevance for applicant {applicant_id} ({len(experiences)} experiences)")
+        return self._post(endpoint, data)
+    
     def queue_score_resume(self, applicant_id: int) -> Tuple[int, dict]:
         """Queue applicant resume for scoring"""
         endpoint = "/api/trpc/applicant.queueScoring"
