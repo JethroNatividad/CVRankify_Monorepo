@@ -535,7 +535,7 @@ export default function ApplicantEvaluationModal({
                 </div>
                 <div className="bg-background p-2">
                   <span className="text-muted-foreground text-xs">
-                    {job.skills}
+                    {job.skills.map((skill) => skill.name).join(", ")}
                   </span>
                 </div>
                 <div className="bg-background p-2">
