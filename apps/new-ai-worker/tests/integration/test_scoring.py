@@ -18,8 +18,9 @@ def test_scoring_applicant():
     job_skills = [{"name": skill.strip(), "weight": 0.1} for skill in job['skills'].split(",")]
     applicant_skills = [skill.strip() for skill in applicant['parsedSkills'].split(",")]
 
-    skills_score_data = score_skills_match(job_skills, applicant_skills)
-    total_skills_score = sum(skill['weighted_score'] for skill in skills_score_data['job_skills'])
+    skills_result = score_skills_match(job_skills, applicant_skills)
+
+    total_skills_score = skills_result['score']
 
     # Score Timezone Match
     timezone_score_data = score_timezone_match(applicant['parsedTimezone'], job['timezone'])
