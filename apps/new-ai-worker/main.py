@@ -3,6 +3,7 @@ import asyncio
 import signal
 from src.config.settings import get_settings
 from src.workers.extraction_worker import extraction_worker
+from src.workers.scoring_worker import scoring_worker
 
 async def process(job, job_token):
     """Route jobs to appropriate handlers based on job name"""
@@ -13,7 +14,7 @@ async def process(job, job_token):
         return "ok"
     
     if job.name == "score-applicant":
-        # await asyncio.to_thread(handle_score_applicant, job)
+        await asyncio.to_thread(scoring_worker, job)
         return "ok"
     
     print(f"Unknown job type: {job.name}")
