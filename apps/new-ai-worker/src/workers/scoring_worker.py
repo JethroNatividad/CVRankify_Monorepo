@@ -1,7 +1,10 @@
 import json
 from src.services.resume_scoring import score_education_match, score_skills_match, score_timezone_match, score_experience_match
+from src.services.api_client import APIClient
+from src.config.constants import ApplicantStatus
 
 def scoring_worker(job):
+    api_client = APIClient()
     applicant_id = job.data.get("applicantId")
     applicant_data = job.data.get("applicantData")
     job_data = job.data.get("jobData")
@@ -29,8 +32,7 @@ def scoring_worker(job):
         skills_score = skills_result['score']
         scored_skills = skills_result['scored_skills']
 
-        # TODO: Update skills with scored_skills
-
+        api_client.update_matched_skills(applicant_id, scored_skills)
 
         # Score Timezone
         timezone_result = score_timezone_match(applicant_data['parsedTimezone'], job_data['timezone'])
@@ -46,7 +48,7 @@ def scoring_worker(job):
         experience_periods_with_relevance = experience_result['experience_periods_with_relevance']
         total_experience_years = experience_result['years_of_experience']
 
-        # TODO: Update database score experience_result['experience_periods_with_relevance']
+        api_client.update_applicant_experience_relevance(applicant_id, experience_periods_with_relevance)
 
 
         # Calculate Overall Score with Weights
@@ -57,17 +59,18 @@ def scoring_worker(job):
             experience_score * float(job_data['experienceWeight'])
         )
 
-        # TODO: Update applicant record with all scores
+        api_client.update_applicant_scores(
+            applicant_id,
+            skills_score,
+            experience_score,
+            education_score,
+            timezone_score,
+            overall_score,
+            total_experience_years,
+        )
 
-        # update_applicant_scores(
-        #     applicant_id,
-        #     skills_score,
-        #     experience_score,
-        #     education_score,
-        #     timezone_score,
-        #     overall_score,
-        #     total_years_with_months,
-        # )
+        # Set status to completed
+        api_client.set_status(applicant_id, ApplicantStatus.COMPLETED)
 
         print({
             "applicant_id": applicant_id,
@@ -77,6 +80,9 @@ def scoring_worker(job):
             "experience_score": experience_score,
             "overall_score": overall_score
         })
+
     except Exception as e:
         # TODO: Handle failure, e.g., log error, update applicant status
+        print(f"Error scoring applicant {applicant_id}: {e}")
+        api_client.set_status(applicant_id, ApplicantStatus.FAILED)
         raise ValueError(f"Failed to score applicant {applicant_id}: {str(e)}") from e
