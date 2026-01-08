@@ -74,6 +74,44 @@ class APIClient:
         logger.info(f"Updating parsed data for applicant {applicant_id}")
         return self._post(endpoint, data)
     
+    def update_matched_skills(
+        self, 
+        applicant_id: int, 
+        matched_skills: list[dict]
+    ) -> Tuple[int, dict]:
+        """
+        Update matched skills for an applicant.
+
+        Args:
+            applicant_id: The ID of the applicant
+            matched_skills: List of matched skills, each containing:
+                - jobSkill: str (max 100 chars)
+                - matchType: str ("explicit", "implied", or "missing")
+                - applicantSkill: str (max 100 chars)
+                - score: float (0-100)
+                - reason: str (optional)
+
+        Example:
+            matched_skills = [
+                {
+                    "jobSkill": "Python",
+                    "matchType": "explicit",
+                    "applicantSkill": "Python Programming",
+                    "score": 95.0,
+                    "reason": "Direct match found in resume"
+                }
+            ]
+        """
+        endpoint = "/api/trpc/applicant.updateApplicantMatchedSkillsAI"
+        data = {
+            "json": {
+                "applicantId": applicant_id,
+                "matchedSkills": matched_skills,
+            }
+        }
+        logger.info(f"Updating matched skills for applicant {applicant_id} ({len(matched_skills)} skills)")
+        return self._post(endpoint, data)
+    
     def queue_score_resume(self, applicant_id: int) -> Tuple[int, dict]:
         """Queue applicant resume for scoring"""
         endpoint = "/api/trpc/applicant.queueScoring"
