@@ -433,7 +433,7 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
                             <div className="flex flex-col">
                               <span className="font-medium">Critical</span>
                               <span className="text-muted-foreground text-xs">
-                                Mandatory
+                                Mandatory - 10 pts
                               </span>
                             </div>
                           </SelectItem>
@@ -441,7 +441,7 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
                             <div className="flex flex-col">
                               <span className="font-medium">High Priority</span>
                               <span className="text-muted-foreground text-xs">
-                                Very Important
+                                Very Important - 7 pts
                               </span>
                             </div>
                           </SelectItem>
@@ -449,7 +449,7 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
                             <div className="flex flex-col">
                               <span className="font-medium">Standard</span>
                               <span className="text-muted-foreground text-xs">
-                                Normal
+                                Normal - 5 pts
                               </span>
                             </div>
                           </SelectItem>
@@ -457,7 +457,7 @@ const EditJobForm = ({ job }: EditJobFormProps) => {
                             <div className="flex flex-col">
                               <span className="font-medium">Low</span>
                               <span className="text-muted-foreground text-xs">
-                                Bonus
+                                Bonus - 2 pts
                               </span>
                             </div>
                           </SelectItem>
