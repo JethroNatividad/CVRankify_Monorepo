@@ -587,7 +587,13 @@ export default function ApplicantEvaluationModal({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground text-xs font-medium">
-                      {(Number(s.score) * 100).toFixed(0)}%
+                      {/* {(Number(s.score) * 100).toFixed(0)}% */}
+                      {Number(s.score) *
+                        (job.skills.find((skill) => skill.name === s.jobSkill)
+                          ?.weight ?? 0)}
+                      /
+                      {job.skills.find((skill) => skill.name === s.jobSkill)
+                        ?.weight ?? 0}
                     </span>
                     <div
                       className={cn(
