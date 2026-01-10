@@ -92,6 +92,7 @@ model Applicant {
     
     // AI Processing Status
     statusAI String @db.VarChar(50) @default("pending") // "pending", "parsing", "processing", "completed", "failed"
+    statusAIMsg String? @db.Text
 
     parsedHighestEducationDegree String? @db.VarChar(100)
     parsedEducationField String? @db.VarChar(100)
