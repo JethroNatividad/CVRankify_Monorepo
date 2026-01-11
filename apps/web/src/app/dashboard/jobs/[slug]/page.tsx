@@ -23,6 +23,7 @@ import Link from "next/link";
 import { ExpandableDescription } from "./_components/expandable-description";
 import { ApplicantsTable } from "./_components/applicants-table";
 import { ReScoreButton } from "./_components/rescore-button";
+import { BulkUploadTest } from "./_components/bulk-upload-test";
 
 interface JobPageProps {
   params: Promise<{ slug: string }>;
@@ -153,6 +154,7 @@ const JobPage = async ({ params }: JobPageProps) => {
             </p>
           </div>
           <div className="space-x-2">
+            <BulkUploadTest jobId={jobId} />
             <ReScoreButton jobId={jobId} />
             <Button asChild>
               <Link href={`/dashboard/jobs/${jobId}/edit`}>

@@ -576,4 +576,71 @@ export const applicantRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  bulkUploadTestResumes: protectedProcedure
+    .input(
+      z.object({
+        jobId: z.number(),
+        resumes: z.array(
+          z.object({
+            minioPath: z.string().min(1),
+            originalFileName: z.string().min(1),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the job exists and belongs to the user
+      const job = await ctx.db.job.findUnique({
+        where: { id: input.jobId, isOpen: true },
+      });
+
+      if (!job) {
+        throw new Error("Job not found or is no longer accepting applications");
+      }
+
+      if (job.createdById !== ctx.session.user.id) {
+        throw new Error("You do not have permission to upload to this job");
+      }
+
+      const createdApplicants = [];
+
+      // Create applicants for each resume file
+      for (const resume of input.resumes) {
+        // Extract filename without extension for the name
+        const nameWithoutExt = resume.originalFileName.replace(/\.[^/.]+$/, "");
+        const email = `${nameWithoutExt}@testmail.com`;
+
+        // Create the applicant
+        const applicant = await ctx.db.applicant.create({
+          data: {
+            name: nameWithoutExt,
+            email: email,
+            resume: resume.minioPath,
+            jobId: input.jobId,
+            statusAI: "pending",
+            interviewStatus: "pending",
+            skillsScoreAI: 0.0,
+            experienceScoreAI: 0.0,
+            educationScoreAI: 0.0,
+            timezoneScoreAI: 0.0,
+            overallScoreAI: 0.0,
+          },
+        });
+
+        // Add to resume processing queue
+        await resumeQueue.add("process-resume", {
+          applicantId: applicant.id,
+          resumePath: resume.minioPath,
+        });
+
+        createdApplicants.push(applicant);
+      }
+
+      return {
+        success: true,
+        count: createdApplicants.length,
+        applicants: createdApplicants,
+      };
+    }),
 });
