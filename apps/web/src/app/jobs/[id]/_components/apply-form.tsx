@@ -22,9 +22,10 @@ import {
   CardHeader,
   CardTitle,
 } from "~/app/_components/ui/card";
-import { Loader2, Send, CheckCircle } from "lucide-react";
+import { Loader2, Send, CheckCircle, Info } from "lucide-react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "~/app/_components/ui/alert";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required").max(255, "Name is too long"),
@@ -341,8 +342,7 @@ export function ApplyForm({
                   </FormControl>
                   <FormDescription>
                     Upload your resume in PDF, DOC, DOCX, or TXT format (max
-                    5MB). For best results, use an ATS-standard format with
-                    clear sections.
+                    5MB).
                     {value && (
                       <span className="ml-2 text-xs font-medium">
                         Selected: {value.name}
@@ -353,6 +353,15 @@ export function ApplyForm({
                 </FormItem>
               )}
             />
+
+            <Alert className="border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-sm text-blue-900">
+                <strong>Note</strong> To get a good ranking, the CV must be
+                ATS-compliant, as non-compliant CVs may be under-ranked despite
+                strong qualifications.
+              </AlertDescription>
+            </Alert>
 
             <Button
               type="submit"
