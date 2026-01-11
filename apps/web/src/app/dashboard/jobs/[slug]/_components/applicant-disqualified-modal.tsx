@@ -146,7 +146,28 @@ export default function ApplicantDisqualifiedModal({
               background: #fee2e2;
               color: #b91c1c;
             }
+            .badge-gray {
+              background: #f3f4f6;
+              color: #4b5563;
+            }
             .text-muted {
+              color: #666;
+            }
+            .experience-item {
+              padding: 6px 8px;
+              border: 1px solid #e5e5e5;
+              border-radius: 4px;
+              margin-bottom: 4px;
+            }
+            .experience-item.relevant {
+              border-left: 3px solid #22c55e;
+            }
+            .job-title {
+              font-weight: 500;
+              font-size: 10px;
+            }
+            .date-range {
+              font-size: 9px;
               color: #666;
             }
             @media print {
@@ -196,12 +217,28 @@ export default function ApplicantDisqualifiedModal({
 
           <section>
             <div class="section-header">
-              <h3>Experience</h3>
+              <h3>Experiences <span style="font-weight: normal; text-transform: none;">(Total: ${Number(applicant.parsedYearsOfExperience ?? 0)} yrs)</span></h3>
               <span class="points text-muted">-</span>
             </div>
-            <div class="card">
-              <span class="text-muted">Not evaluated (disqualified at skills stage)</span>
-            </div>
+            ${
+              applicant.experiences.length > 0
+                ? applicant.experiences
+                    .map(
+                      (exp) => `
+                <div class="experience-item ${exp.relevant ? "relevant" : ""}">
+                  <div class="card-header">
+                    <div>
+                      <span class="job-title">${exp.jobTitle}</span>
+                      <span class="date-range"> · ${exp.startMonth} ${exp.startYear} – ${exp.endMonth !== "None" ? exp.endMonth : "Present"} ${exp.endYear !== "Present" ? exp.endYear : ""}</span>
+                    </div>
+                    <span class="badge ${exp.relevant ? "badge-green" : "badge-gray"}">${exp.relevant ? "-" : "-"}</span>
+                  </div>
+                </div>
+              `,
+                    )
+                    .join("")
+                : '<p style="color: #666; font-size: 10px;">No experiences found.</p>'
+            }
           </section>
 
           <section>
@@ -210,7 +247,7 @@ export default function ApplicantDisqualifiedModal({
               <span class="points text-muted">-</span>
             </div>
             <div class="card">
-              <span class="text-muted">Not evaluated (disqualified at skills stage)</span>
+              ${applicant.parsedHighestEducationDegree} in ${applicant.parsedEducationField}
             </div>
           </section>
 
@@ -220,7 +257,7 @@ export default function ApplicantDisqualifiedModal({
               <span class="points text-muted">-</span>
             </div>
             <div class="card">
-              <span class="text-muted">Not evaluated (disqualified at skills stage)</span>
+              ${applicant.parsedTimezone}
             </div>
           </section>
         </body>
@@ -325,24 +362,60 @@ export default function ApplicantDisqualifiedModal({
             </div>
           </section>
 
-          {/* 💼 Experiences - Not Evaluated */}
+          {/* 💼 Experiences */}
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-muted-foreground text-sm font-semibold uppercase">
-                Experience
+                Experiences
               </h3>
-              <span className="text-muted-foreground text-sm font-semibold">
-                -
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground text-xs">
+                  Total: {Number(applicant.parsedYearsOfExperience ?? 0)} years
+                </span>
+                <span className="text-muted-foreground text-sm font-semibold">
+                  -
+                </span>
+              </div>
             </div>
-            <div className="bg-muted/30 flex justify-between rounded-md border p-3 text-sm">
-              <span className="text-muted-foreground">
-                Not evaluated (disqualified at skills stage)
-              </span>
+            <div className="space-y-2">
+              {applicant.experiences.length > 0 ? (
+                applicant.experiences.map((exp) => (
+                  <div
+                    key={exp.id}
+                    className={cn(
+                      "bg-muted/30 flex items-center justify-between rounded-md border p-3 text-sm",
+                      exp.relevant ? "border-l-4 border-l-green-500" : "",
+                    )}
+                  >
+                    <div>
+                      <div className="font-medium">{exp.jobTitle}</div>
+                      <div className="text-muted-foreground text-xs">
+                        {exp.startMonth} {exp.startYear} –{" "}
+                        {exp.endMonth !== "None" ? exp.endMonth : "Present"}{" "}
+                        {exp.endYear !== "Present" ? exp.endYear : ""}
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-md px-2 py-0.5 text-xs font-medium",
+                        exp.relevant
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-600",
+                      )}
+                    >
+                      {exp.relevant ? "Relevant" : "-"}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No experiences found.
+                </p>
+              )}
             </div>
           </section>
 
-          {/* 🎓 Education - Not Evaluated */}
+          {/* 🎓 Education */}
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-muted-foreground text-sm font-semibold uppercase">
@@ -353,26 +426,25 @@ export default function ApplicantDisqualifiedModal({
               </span>
             </div>
             <div className="bg-muted/30 flex justify-between rounded-md border p-3 text-sm">
-              <span className="text-muted-foreground">
-                Not evaluated (disqualified at skills stage)
+              <span>
+                {applicant.parsedHighestEducationDegree} in{" "}
+                {applicant.parsedEducationField}
               </span>
             </div>
           </section>
 
-          {/* 🌐 Timezone - Not Evaluated */}
+          {/* 🌐 Timezone */}
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-muted-foreground text-sm font-semibold uppercase">
-                Timezone
+                Timezone Compatibility
               </h3>
               <span className="text-muted-foreground text-sm font-semibold">
                 -
               </span>
             </div>
             <div className="bg-muted/30 flex justify-between rounded-md border p-3 text-sm">
-              <span className="text-muted-foreground">
-                Not evaluated (disqualified at skills stage)
-              </span>
+              <span>{applicant.parsedTimezone}</span>
             </div>
           </section>
         </div>
