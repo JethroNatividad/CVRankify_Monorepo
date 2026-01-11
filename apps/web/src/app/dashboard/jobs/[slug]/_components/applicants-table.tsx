@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   FileText,
   UserCheck,
@@ -8,6 +8,8 @@ import {
   Calendar,
   MoreHorizontal,
   Star,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Badge } from "~/app/_components/ui/badge";
 import { Button } from "~/app/_components/ui/button";
@@ -297,14 +299,57 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
   // Separate completed and non-completed applicants
   let { applicants } = job;
 
+  // State for sorting
+  const [sortBy, setSortBy] = useState<
+    "overall" | "skills" | "experience" | "education" | "timezone"
+  >("overall");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  // Handle sort column change
+  const handleSort = (column: typeof sortBy) => {
+    if (sortBy === column) {
+      // Toggle direction if clicking same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Default to descending when changing column
+      setSortBy(column);
+      setSortDirection("desc");
+    }
+  };
+
+  // Sort completed applicants based on selected category
   const completedApplicants =
     applicants
       ?.filter((applicant) => applicant.statusAI === "completed")
-      ?.sort(
-        (a, b) =>
-          (parseFloat(b.overallScoreAI?.toString() || "0") || 0) -
-          (parseFloat(a.overallScoreAI?.toString() || "0") || 0),
-      ) || [];
+      ?.sort((a, b) => {
+        let aValue = 0;
+        let bValue = 0;
+
+        switch (sortBy) {
+          case "overall":
+            aValue = parseFloat(a.overallScoreAI?.toString() || "0");
+            bValue = parseFloat(b.overallScoreAI?.toString() || "0");
+            break;
+          case "skills":
+            aValue = parseFloat(a.skillsScoreAI?.toString() || "0");
+            bValue = parseFloat(b.skillsScoreAI?.toString() || "0");
+            break;
+          case "experience":
+            aValue = parseFloat(a.experienceScoreAI?.toString() || "0");
+            bValue = parseFloat(b.experienceScoreAI?.toString() || "0");
+            break;
+          case "education":
+            aValue = parseFloat(a.educationScoreAI?.toString() || "0");
+            bValue = parseFloat(b.educationScoreAI?.toString() || "0");
+            break;
+          case "timezone":
+            aValue = parseFloat(a.timezoneScoreAI?.toString() || "0");
+            bValue = parseFloat(b.timezoneScoreAI?.toString() || "0");
+            break;
+        }
+
+        return sortDirection === "desc" ? bValue - aValue : aValue - bValue;
+      }) || [];
 
   const nonCompletedApplicants =
     applicants
@@ -398,11 +443,75 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
               <TableRow>
                 <TableHead className="w-[60px]">Rank</TableHead>
                 <TableHead className="w-[200px]">Applicant</TableHead>
-                <TableHead className="w-[120px]">Overall Score</TableHead>
+                <TableHead className="w-[120px]">
+                  <button
+                    onClick={() => handleSort("overall")}
+                    className="hover:text-foreground flex items-center gap-1"
+                  >
+                    Overall Score
+                    {sortBy === "overall" &&
+                      (sortDirection === "desc" ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronUp className="h-4 w-4" />
+                      ))}
+                  </button>
+                </TableHead>
                 <TableHead className="w-[100px]">AI Status</TableHead>
                 <TableHead className="w-[120px]">Interview Status</TableHead>
                 <TableHead className="w-[100px]">Applied</TableHead>
-                <TableHead className="w-[300px]">Assessment</TableHead>
+                <TableHead className="w-[300px]">
+                  <div className="grid grid-cols-4 gap-2">
+                    <button
+                      onClick={() => handleSort("skills")}
+                      className="hover:text-foreground flex items-center justify-center gap-0.5 text-xs"
+                    >
+                      Skills
+                      {sortBy === "skills" &&
+                        (sortDirection === "desc" ? (
+                          <ChevronDown className="h-3 w-3" />
+                        ) : (
+                          <ChevronUp className="h-3 w-3" />
+                        ))}
+                    </button>
+                    <button
+                      onClick={() => handleSort("experience")}
+                      className="hover:text-foreground flex items-center justify-center gap-0.5 text-xs"
+                    >
+                      Exp
+                      {sortBy === "experience" &&
+                        (sortDirection === "desc" ? (
+                          <ChevronDown className="h-3 w-3" />
+                        ) : (
+                          <ChevronUp className="h-3 w-3" />
+                        ))}
+                    </button>
+                    <button
+                      onClick={() => handleSort("education")}
+                      className="hover:text-foreground flex items-center justify-center gap-0.5 text-xs"
+                    >
+                      Edu
+                      {sortBy === "education" &&
+                        (sortDirection === "desc" ? (
+                          <ChevronDown className="h-3 w-3" />
+                        ) : (
+                          <ChevronUp className="h-3 w-3" />
+                        ))}
+                    </button>
+                    <button
+                      onClick={() => handleSort("timezone")}
+                      className="hover:text-foreground flex items-center justify-center gap-0.5 text-xs"
+                    >
+                      Time
+                      {sortBy === "timezone" &&
+                        (sortDirection === "desc" ? (
+                          <ChevronDown className="h-3 w-3" />
+                        ) : (
+                          <ChevronUp className="h-3 w-3" />
+                        ))}
+                    </button>
+                  </div>
+                </TableHead>
                 <TableHead className="w-[100px]">Resume</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
