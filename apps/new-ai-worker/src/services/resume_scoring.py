@@ -67,6 +67,10 @@ def score_skills_match(job_skills, applicant_skills):
         total_matched_skill_points = 0.0
 
         final_score = 0.0
+
+        disqualified = False
+        required_skills = [skill['name'] for skill in job_skills if float(skill['weight']) >= 10]
+        n_required_skills_matched = 0
         
         for match in scored_skills["job_skills"]:
             skill_name = match['skill']
@@ -74,6 +78,9 @@ def score_skills_match(job_skills, applicant_skills):
             
             # Get weight from the map
             weight = job_weight_map.get(skill_name, 0)
+
+            if weight >= 10 and match_score > 0:
+                n_required_skills_matched += 1
             
             # Multiply Weight by the Semantic Match Score (1.0 or 0.5)
             # 10 * 1.0 = 10
@@ -81,6 +88,10 @@ def score_skills_match(job_skills, applicant_skills):
             points_earned = weight * match_score
             
             total_matched_skill_points += points_earned
+        
+        # Disqualify if not all required skills are matched
+        if n_required_skills_matched < len(required_skills):
+            disqualified = True
 
         # 4. Final Calculation
         if total_job_skills_points > 0:
@@ -99,10 +110,13 @@ def score_skills_match(job_skills, applicant_skills):
                     "reason": entry.get("reason", ""),
                 } for entry in scored_skills["job_skills"]
             ]
+        
+
 
         return {
             "score": final_score,
-            "scored_skills": scored_skills_payload
+            "scored_skills": scored_skills_payload,
+            "disqualified": disqualified
         }
     except Exception as e:
         raise ValueError(f"Failed to score skills match: {str(e)}") from e
