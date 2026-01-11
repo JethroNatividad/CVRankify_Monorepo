@@ -114,6 +114,9 @@ model Applicant {
     timezoneFeedbackAI   String? @db.Text
     overallFeedbackAI    String? @db.Text
 
+    parsingTimeMsAI Int? @db.Int // Time taken for AI processing in milliseconds
+    scoringTimeMsAI Int? @db.Int // Time taken for AI scoring in milliseconds
+
     // Interview Tracking
     currentStage    Int    @db.TinyInt @default(0) // 0 = application review, 1+ = interview rounds
     interviewStatus String @db.VarChar(20) @default("pending") // "pending", "scheduled", "passed", "failed", "hired", "rejected"
