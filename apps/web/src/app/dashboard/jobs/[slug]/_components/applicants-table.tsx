@@ -33,6 +33,7 @@ import {
 } from "~/app/_components/ui/dropdown-menu";
 import type { SerializedJob } from "~/lib/types";
 import ApplicantEvaluationModal from "./applicant-evaluation-modal";
+import ApplicantDisqualifiedModal from "./applicant-disqualified-modal";
 import { api } from "~/trpc/react";
 import { useRouter } from "next/navigation";
 
@@ -447,6 +448,10 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
                             )}
                           </TooltipContent>
                         </Tooltip>
+                      ) : applicant.statusAI === "disqualified" ? (
+                        <div className="text-muted-foreground text-center text-sm">
+                          -
+                        </div>
                       ) : (
                         <div className="text-muted-foreground text-center text-sm">
                           Pending
@@ -520,6 +525,44 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
                             />
                           </div>
                         </ApplicantEvaluationModal>
+                      ) : applicant.statusAI === "disqualified" ? (
+                        <ApplicantDisqualifiedModal
+                          applicant={applicant}
+                          job={job}
+                        >
+                          <div className="grid cursor-pointer grid-cols-4 gap-2 transition-opacity hover:opacity-70">
+                            <ScoreTooltip
+                              score={skillsScore}
+                              label="Skills"
+                              feedback={applicant.skillsFeedbackAI}
+                              color="text-blue-600"
+                            />
+                            <div className="text-center">
+                              <div className="text-muted-foreground text-sm font-medium">
+                                -
+                              </div>
+                              <div className="text-muted-foreground text-xs">
+                                Exp
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-muted-foreground text-sm font-medium">
+                                -
+                              </div>
+                              <div className="text-muted-foreground text-xs">
+                                Edu
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-muted-foreground text-sm font-medium">
+                                -
+                              </div>
+                              <div className="text-muted-foreground text-xs">
+                                Time
+                              </div>
+                            </div>
+                          </div>
+                        </ApplicantDisqualifiedModal>
                       ) : (
                         <div className="text-muted-foreground text-center text-sm">
                           Processing...
