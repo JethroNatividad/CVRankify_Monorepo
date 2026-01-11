@@ -103,6 +103,21 @@ type Props = {
   children: React.ReactNode;
 };
 
+function formatProcessTime(
+  parsingMs: number | null,
+  scoringMs: number | null,
+): string {
+  const totalMs = (parsingMs ?? 0) + (scoringMs ?? 0);
+  if (totalMs === 0) return "Unknown";
+
+  if (totalMs < 1000) {
+    return `${totalMs}ms`;
+  } else {
+    const seconds = (totalMs / 1000).toFixed(2);
+    return `${seconds}s`;
+  }
+}
+
 export default function ApplicantEvaluationModal({
   job,
   applicant,
@@ -452,6 +467,13 @@ export default function ApplicantEvaluationModal({
                 Detailed evaluation and scoring of applicant against job
                 requirements
               </DialogDescription>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Process Time:{" "}
+                {formatProcessTime(
+                  applicant.parsingTimeMsAI,
+                  applicant.scoringTimeMsAI,
+                )}
+              </p>
             </div>
             <Button
               variant="outline"
