@@ -106,13 +106,15 @@ export const applicantRouter = createTRPCRouter({
           "processing",
           "completed",
           "failed",
+          "disqualified",
         ]),
+        statusAIMsg: z.string().max(1000).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const applicant = await ctx.db.applicant.update({
         where: { id: input.applicantId },
-        data: { statusAI: input.statusAI },
+        data: { statusAI: input.statusAI, statusAIMsg: input.statusAIMsg },
       });
 
       if (!applicant) {
