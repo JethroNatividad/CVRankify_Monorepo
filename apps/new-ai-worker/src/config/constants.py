@@ -6,6 +6,7 @@ class ApplicantStatus(str, Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+    DISQUALIFIED = "disqualified"
 
 class EducationDegree(str, Enum):
     NONE = "None"
