@@ -34,7 +34,8 @@ class APIClient:
     def set_status(
         self, 
         applicant_id: int, 
-        status: ApplicantStatus
+        status: ApplicantStatus,
+        msg: Optional[str] = None
     ) -> Tuple[int, dict]:
         """Update applicant status"""
         endpoint = "/api/trpc/applicant.updateStatusAI"
@@ -42,6 +43,7 @@ class APIClient:
             "json": {
                 "applicantId": applicant_id,
                 "statusAI": status.value,
+                "statusAIMsg": msg
             }
         }
         logger.info(f"Setting status for applicant {applicant_id} to {status.value}")
