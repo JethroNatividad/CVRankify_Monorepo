@@ -1,8 +1,8 @@
 1. Include system performance analysis, such as time complexity and processing time, when screening at least 100 resumes, and compare it with the traditional manual screening method.
 
-2. Optimize the ranking process by eliminating non-fit candidates early to reduce server overload. Suggestion: use required skills as a baseline filter.
+2. <s>Optimize the ranking process by eliminating non-fit candidates early to reduce server overload. Suggestion: use required skills as a baseline filter.</s>
 
-3. Highlight the strengths of top-ranking applicants, for example: “Applicant 1 excels in education,” “Applicant 2 excels in experience,” etc., to provide detailed evaluation insights.
+3. <s>Highlight the strengths of top-ranking applicants, for example: “Applicant 1 excels in education,” “Applicant 2 excels in experience,” etc., to provide detailed evaluation insights.</s>
 
 4. <s>Indicate in the system and report a limitation: to get a good ranking, the CV must be ATS-compliant, as non-compliant CVs may be under-ranked despite strong qualifications.</s>
 
