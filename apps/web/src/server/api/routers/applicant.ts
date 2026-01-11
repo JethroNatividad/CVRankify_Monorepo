@@ -537,21 +537,37 @@ export const applicantRouter = createTRPCRouter({
     }),
 
   // Update parsingTimeMsAI and scoringTimeMsAI
-  updateProcessingTimesAI: externalAIProcedure
+  updateParsingTimeAI: externalAIProcedure
     .input(
       z.object({
         applicantId: z.number(),
-        parsingTimeMsAI: z.number().min(0).optional(),
-        scoringTimeMsAI: z.number().min(0).optional(),
+        parsingTimeMsAI: z.number().min(0),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const applicant = await ctx.db.applicant.update({
         where: { id: input.applicantId },
-        data: {
-          parsingTimeMsAI: input.parsingTimeMsAI,
-          scoringTimeMsAI: input.scoringTimeMsAI,
-        },
+        data: { parsingTimeMsAI: input.parsingTimeMsAI },
+      });
+
+      if (!applicant) {
+        throw new Error("Applicant not found");
+      }
+
+      return { success: true };
+    }),
+
+  updateScoringTimeAI: externalAIProcedure
+    .input(
+      z.object({
+        applicantId: z.number(),
+        scoringTimeMsAI: z.number().min(0),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const applicant = await ctx.db.applicant.update({
+        where: { id: input.applicantId },
+        data: { scoringTimeMsAI: input.scoringTimeMsAI },
       });
 
       if (!applicant) {

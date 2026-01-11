@@ -208,20 +208,34 @@ class APIClient:
         logger.info(f"Queueing score for applicant {applicant_id}")
         return self._post(endpoint, data)
     
-    def update_processing_times(
+    def update_parsing_time(
         self,
         applicant_id: int,
-        parsing_time_ms: int,
-        scoring_time_ms: int
+        parsing_time_ms: int
     ) -> Tuple[int, dict]:
-        """Update processing times for an applicant"""
-        endpoint = "/api/trpc/applicant.updateProcessingTimesAI"
+        """Update parsing time for an applicant"""
+        endpoint = "/api/trpc/applicant.updateParsingTimeAI"
         data = {
             "json": {
                 "applicantId": applicant_id,
                 "parsingTimeMsAI": parsing_time_ms,
-                "scoringTimeMsAI": scoring_time_ms
             }
         }
-        logger.info(f"Updating processing times for applicant {applicant_id} (parsing: {parsing_time_ms}ms, scoring: {scoring_time_ms}ms)")
+        logger.info(f"Updating parsing time for applicant {applicant_id} to {parsing_time_ms} ms")
+        return self._post(endpoint, data)
+    
+    def update_scoring_time(
+        self,
+        applicant_id: int,
+        scoring_time_ms: int
+    ) -> Tuple[int, dict]:
+        """Update scoring time for an applicant"""
+        endpoint = "/api/trpc/applicant.updateScoringTimeAI"
+        data = {
+            "json": {
+                "applicantId": applicant_id,
+                "scoringTimeMsAI": scoring_time_ms,
+            }
+        }
+        logger.info(f"Updating scoring time for applicant {applicant_id} to {scoring_time_ms} ms")
         return self._post(endpoint, data)
