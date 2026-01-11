@@ -33,8 +33,6 @@ def extraction_worker(job):
 
     except Exception as e:
         # Set status to failed
-        api_client.set_status(applicant_id, ApplicantStatus.FAILED)
-
-        # TODO: add description on database for failure reason
-        
         print(f"Error processing applicant {applicant_id}: {e}")
+        api_client.set_status(applicant_id, ApplicantStatus.FAILED, f"Failed to extract or parse resume: {e}")
+        

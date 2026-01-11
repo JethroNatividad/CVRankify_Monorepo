@@ -82,7 +82,5 @@ def scoring_worker(job):
         })
 
     except Exception as e:
-        # TODO: Handle failure, e.g., log error, update applicant status
         print(f"Error scoring applicant {applicant_id}: {e}")
-        api_client.set_status(applicant_id, ApplicantStatus.FAILED)
-        raise ValueError(f"Failed to score applicant {applicant_id}: {str(e)}") from e
+        api_client.set_status(applicant_id, ApplicantStatus.FAILED, f"Failed to score resume: {e}")
