@@ -35,7 +35,7 @@ class APIClient:
         self, 
         applicant_id: int, 
         status: ApplicantStatus,
-        msg: Optional[str] = None
+        msg: Optional[str] = ""
     ) -> Tuple[int, dict]:
         """Update applicant status"""
         endpoint = "/api/trpc/applicant.updateStatusAI"
