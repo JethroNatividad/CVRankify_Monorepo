@@ -341,7 +341,8 @@ export function ApplyForm({
                   </FormControl>
                   <FormDescription>
                     Upload your resume in PDF, DOC, DOCX, or TXT format (max
-                    5MB).
+                    5MB). For best results, use an ATS-standard format with
+                    clear sections.
                     {value && (
                       <span className="ml-2 text-xs font-medium">
                         Selected: {value.name}
