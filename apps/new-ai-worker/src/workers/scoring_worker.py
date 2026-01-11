@@ -14,14 +14,6 @@ def scoring_worker(job):
         applicant_data = json.loads(applicant_data)
         job_data = json.loads(job_data)
 
-        # Score Education
-        education_score = score_education_match(
-            applicant_highest_degree=applicant_data['parsedHighestEducationDegree'],
-            applicant_education_field=applicant_data['parsedEducationField'],
-            job_required_degree=job_data['educationDegree'],
-            job_education_field=job_data['educationField']
-        )
-
         # Score Skills
 
         applicant_skills = [skill.strip() for skill in applicant_data['parsedSkills'].split(",")]
@@ -34,6 +26,15 @@ def scoring_worker(job):
 
         api_client.update_matched_skills(applicant_id, scored_skills)
 
+        # Score Education
+        education_score = score_education_match(
+            applicant_highest_degree=applicant_data['parsedHighestEducationDegree'],
+            applicant_education_field=applicant_data['parsedEducationField'],
+            job_required_degree=job_data['educationDegree'],
+            job_education_field=job_data['educationField']
+        )
+
+    
         # Score Timezone
         timezone_result = score_timezone_match(applicant_data['parsedTimezone'], job_data['timezone'])
         timezone_score = timezone_result['score']
