@@ -172,11 +172,7 @@ function InterviewStatusActions({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -197,8 +193,6 @@ function InterviewStatusActions({
   const handleProceedToInterview = () => {
     proceedToInterview.mutate({ applicantId });
   };
-
-
 
   const handleHire = () => {
     updateInterviewStatus.mutate({
@@ -345,6 +339,8 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
         return "bg-gray-500 text-white dark:bg-gray-600";
       case "failed":
         return "bg-red-500 text-white dark:bg-red-600";
+      case "disqualified":
+        return "bg-red-700 text-white dark:bg-red-800";
       default:
         return "outline";
     }
