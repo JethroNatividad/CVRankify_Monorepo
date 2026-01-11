@@ -23,8 +23,17 @@ def scoring_worker(job):
 
         skills_score = skills_result['score']
         scored_skills = skills_result['scored_skills']
+        is_disqualified = skills_result['disqualified']
 
         api_client.update_matched_skills(applicant_id, scored_skills)
+
+        if is_disqualified:
+            api_client.set_status(applicant_id, ApplicantStatus.DISQUALIFIED, "Applicant disqualified due to missing required skills.")
+            print({
+                "applicant_id": applicant_id,
+                "reason": "Disqualified due to missing required skills."
+            })
+            return
 
         # Score Education
         education_score = score_education_match(
