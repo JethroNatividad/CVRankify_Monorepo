@@ -7,6 +7,7 @@ import {
   UserX,
   Calendar,
   MoreHorizontal,
+  Star,
 } from "lucide-react";
 import { Badge } from "~/app/_components/ui/badge";
 import { Button } from "~/app/_components/ui/button";
@@ -46,13 +47,27 @@ interface ScoreTooltipProps {
   label: string;
   feedback?: string | null;
   color: string;
+  isHighest?: boolean;
 }
 
-function ScoreTooltip({ score, label, feedback, color }: ScoreTooltipProps) {
+function ScoreTooltip({
+  score,
+  label,
+  feedback,
+  color,
+  isHighest = false,
+}: ScoreTooltipProps) {
   if (!feedback) {
     return (
       <div className="text-center">
-        <div className={`text-sm font-medium ${color}`}>{score} pts</div>
+        <div
+          className={`text-sm font-medium ${color} flex items-center justify-center gap-1`}
+        >
+          {score} pts
+          {isHighest && (
+            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+          )}
+        </div>
         <div className="text-muted-foreground text-xs">{label}</div>
       </div>
     );
@@ -62,12 +77,24 @@ function ScoreTooltip({ score, label, feedback, color }: ScoreTooltipProps) {
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="cursor-help text-center">
-          <div className={`text-sm font-medium ${color}`}>{score} pts</div>
+          <div
+            className={`text-sm font-medium ${color} flex items-center justify-center gap-1`}
+          >
+            {score} pts
+            {isHighest && (
+              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+            )}
+          </div>
           <div className="text-muted-foreground text-xs">{label}</div>
         </div>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs">
         <p className="font-medium">AI Feedback - {label}</p>
+        {isHighest && (
+          <p className="mb-1 text-xs font-semibold text-yellow-500">
+            ⭐ Excels in {label}
+          </p>
+        )}
         <p className="text-sm">{feedback}</p>
       </TooltipContent>
     </Tooltip>
@@ -398,6 +425,23 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
                   applicant.timezoneScoreAI?.toString() || "0",
                 );
 
+                // Find highest score category for completed applicants
+                const scores = [
+                  { category: "Skills", value: skillsScore },
+                  { category: "Experience", value: experienceScore },
+                  { category: "Education", value: educationScore },
+                  { category: "Timezone", value: timezoneScore },
+                ];
+                const highestScore =
+                  applicant.statusAI === "completed"
+                    ? Math.max(
+                        skillsScore,
+                        experienceScore,
+                        educationScore,
+                        timezoneScore,
+                      )
+                    : null;
+
                 // Only show rank for completed applicants
                 const isCompleted = applicant.statusAI === "completed";
                 const completedIndex = completedApplicants.findIndex(
@@ -504,24 +548,44 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
                               label="Skills"
                               feedback={applicant.skillsFeedbackAI}
                               color="text-blue-600"
+                              isHighest={
+                                skillsScore === highestScore &&
+                                highestScore !== null &&
+                                highestScore > 0
+                              }
                             />
                             <ScoreTooltip
                               score={experienceScore}
                               label="Exp"
                               feedback={applicant.experienceFeedbackAI}
                               color="text-green-600"
+                              isHighest={
+                                experienceScore === highestScore &&
+                                highestScore !== null &&
+                                highestScore > 0
+                              }
                             />
                             <ScoreTooltip
                               score={educationScore}
                               label="Edu"
                               feedback={applicant.educationFeedbackAI}
                               color="text-purple-600"
+                              isHighest={
+                                educationScore === highestScore &&
+                                highestScore !== null &&
+                                highestScore > 0
+                              }
                             />
                             <ScoreTooltip
                               score={timezoneScore}
                               label="Time"
                               feedback={applicant.timezoneFeedbackAI}
                               color="text-orange-600"
+                              isHighest={
+                                timezoneScore === highestScore &&
+                                highestScore !== null &&
+                                highestScore > 0
+                              }
                             />
                           </div>
                         </ApplicantEvaluationModal>
