@@ -11,6 +11,8 @@ def extraction_worker(job):
     applicant_id = job.data.get("applicantId")
     resume_path = job.data.get("resumePath")
 
+    print(f"Starting extraction for applicant ID: {applicant_id}")
+
     try:
 
         pdf_data = get_minio_object(resume_path)
@@ -21,6 +23,8 @@ def extraction_worker(job):
         extraction_start = time.time()
         extracted_text = extract_pdf_text(pdf_data)
         extraction_time_ms = int((time.time() - extraction_start) * 1000)
+
+        print(extracted_text)
         
         # Set status to parsing
         api_client.set_status(applicant_id, ApplicantStatus.PARSING)

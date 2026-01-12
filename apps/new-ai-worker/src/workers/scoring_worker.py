@@ -10,6 +10,8 @@ def scoring_worker(job):
     applicant_data = job.data.get("applicantData")
     job_data = job.data.get("jobData")
 
+    print(f"Starting scoring for applicant ID: {applicant_id}")
+
     try:
         
         applicant_data = json.loads(applicant_data)
