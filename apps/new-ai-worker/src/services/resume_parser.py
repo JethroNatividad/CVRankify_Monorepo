@@ -7,9 +7,17 @@ def parse_resume_text(resume_text):
     """
 
     try:
+        print("Parsing resume text with AI model...")
         education_and_timezone = query_ollama_model(model="edu-timezone-extractor:latest", content=resume_text)
+        print("Education and Timezone extracted:", education_and_timezone)
+        print("Extracting skills and experience...")
+        
         skills = query_ollama_model(model="skills-extractor:latest", content=resume_text)
+        print("Skills extracted:", skills)
+        print("Extracting experience...")
+
         experience = query_ollama_model(model="experience-extractor:latest", content=resume_text)
+        print("Experience extracted:", experience)
 
         parsed_resume = {
             **education_and_timezone,
