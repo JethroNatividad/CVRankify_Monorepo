@@ -35,3 +35,12 @@ env/bin/pytest
 
 ```
 
+## To create the finetuned models, run:
+ollama create edu-timezone-extractor -f modelfiles/edu_timezone_extractor/Modelfile
+ollama create experience-extractor -f modelfiles/experience_extractor/Modelfile
+ollama create skills-extractor -f modelfiles/skills_extractor/Modelfile
+
+ollama create edu-match -f modelfiles/edu_match/Modelfile
+ollama create skills_score -f modelfiles/skills_score/Modelfile
+ollama create exp_relevance_eval -f modelfiles/exp_relevance_eval/Modelfile
+ollama create json_fixer -f modelfiles/json_fixer/Modelfile
