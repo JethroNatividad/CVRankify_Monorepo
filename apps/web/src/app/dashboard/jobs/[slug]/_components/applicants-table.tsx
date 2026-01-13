@@ -131,6 +131,21 @@ const formatTimeAgo = (date: Date | string): string => {
   }
 };
 
+function formatProcessTime(
+  parsingMs: number | null,
+  scoringMs: number | null,
+): string {
+  const totalMs = (parsingMs ?? 0) + (scoringMs ?? 0);
+  if (totalMs === 0) return "Unknown";
+
+  if (totalMs < 1000) {
+    return `${totalMs}ms`;
+  } else {
+    const seconds = (totalMs / 1000).toFixed(2);
+    return `${seconds}s`;
+  }
+}
+
 function ViewResumeButton({ applicantId }: { applicantId: number }) {
   const handleViewResume = () => {
     // Open the resume via the API proxy route
@@ -362,6 +377,22 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
   // Combine arrays with completed first, then non-completed
   applicants = [...completedApplicants, ...nonCompletedApplicants];
 
+  // Calculate average process time for completed applicants
+  const completedApplicantsWithTime = completedApplicants.filter(
+    (applicant) =>
+      applicant.parsingTimeMsAI !== null && applicant.scoringTimeMsAI !== null,
+  );
+  const averageProcessTime =
+    completedApplicantsWithTime.length > 0
+      ? completedApplicantsWithTime.reduce(
+          (sum, applicant) =>
+            sum +
+            (applicant.parsingTimeMsAI ?? 0) +
+            (applicant.scoringTimeMsAI ?? 0),
+          0,
+        ) / completedApplicantsWithTime.length
+      : 0;
+
   if (!applicants?.length) {
     return (
       <div className="rounded-lg border">
@@ -429,6 +460,12 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
               {applicants.length} total application
               {applicants.length !== 1 ? "s" : ""}
             </p>
+            {completedApplicantsWithTime.length > 0 && (
+              <p className="text-muted-foreground mt-1 text-xs">
+                Average Process Time:{" "}
+                {formatProcessTime(averageProcessTime, null)}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs">
