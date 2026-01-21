@@ -37,6 +37,7 @@ import {
 import type { SerializedJob } from "~/lib/types";
 import ApplicantEvaluationModal from "./applicant-evaluation-modal";
 import ApplicantDisqualifiedModal from "./applicant-disqualified-modal";
+import ApplicantComparisonModal from "./applicant-comparison-modal";
 import { api } from "~/trpc/react";
 import { useRouter } from "next/navigation";
 
@@ -320,6 +321,30 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
   >("overall");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
+  // State for selection and comparison
+  const [selectedApplicants, setSelectedApplicants] = useState<number[]>([]);
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  const handleSelect = (applicantId: number) => {
+    setSelectedApplicants((prev) => {
+      if (prev.includes(applicantId)) {
+        return prev.filter((id) => id !== applicantId);
+      }
+      if (prev.length >= 2) {
+        // Replace the second one (or first? let's just keep the most recent selection logic by removing the first selected and adding this one?)
+        // Better UX: Don't allow selecting more than 2, or just remove the oldest selection.
+        // Let's remove the first one to keep it rolling 2 selections.
+        return [prev[1]!, applicantId];
+      }
+      return [...prev, applicantId];
+    });
+  };
+
+  const selectedApplicantObjects = job.applicants?.filter((a) =>
+    selectedApplicants.includes(a.id),
+  );
+
   // Handle sort column change
   const handleSort = (column: typeof sortBy) => {
     if (sortBy === column) {
@@ -385,12 +410,12 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
   const averageProcessTime =
     completedApplicantsWithTime.length > 0
       ? completedApplicantsWithTime.reduce(
-          (sum, applicant) =>
-            sum +
-            (applicant.parsingTimeMsAI ?? 0) +
-            (applicant.scoringTimeMsAI ?? 0),
-          0,
-        ) / completedApplicantsWithTime.length
+        (sum, applicant) =>
+          sum +
+          (applicant.parsingTimeMsAI ?? 0) +
+          (applicant.scoringTimeMsAI ?? 0),
+        0,
+      ) / completedApplicantsWithTime.length
       : 0;
 
   if (!applicants?.length) {
@@ -454,30 +479,77 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
     <TooltipProvider>
       <div className="rounded-lg border">
         <div className="flex items-center justify-between border-b p-4">
-          <div>
-            <h2 className="text-base font-medium">Applicants</h2>
-            <p className="text-muted-foreground text-sm">
-              {applicants.length} total application
-              {applicants.length !== 1 ? "s" : ""}
-            </p>
-            {completedApplicantsWithTime.length > 0 && (
-              <p className="text-muted-foreground mt-1 text-xs">
-                Average Process Time:{" "}
-                {formatProcessTime(averageProcessTime, null)}
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-base font-medium">Applicants</h2>
+              <p className="text-muted-foreground text-sm">
+                {applicants.length} total application
+                {applicants.length !== 1 ? "s" : ""}
               </p>
-            )}
+              {completedApplicantsWithTime.length > 0 && (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Average Process Time:{" "}
+                  {formatProcessTime(averageProcessTime, null)}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
+            {!isSelectionMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsSelectionMode(true);
+                  setSelectedApplicants([]);
+                }}
+              >
+                Select to Compare
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-300">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsSelectionMode(false);
+                    setSelectedApplicants([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {selectedApplicants.length === 2 && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setIsComparisonOpen(true)}
+                  >
+                    Compare ({selectedApplicants.length})
+                  </Button>
+                )}
+              </div>
+            )}
             <Badge variant="outline" className="text-xs">
               {applicants.length} Applied
             </Badge>
           </div>
         </div>
 
+        {selectedApplicantObjects.length === 2 && (
+          <ApplicantComparisonModal
+            isOpen={isComparisonOpen}
+            onClose={() => setIsComparisonOpen(false)}
+            applicant1={selectedApplicantObjects[0]!}
+            applicant2={selectedApplicantObjects[1]!}
+            job={job}
+          />
+        )}
+
         <div className="relative overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
+                {isSelectionMode && <TableHead className="w-[40px]"></TableHead>}
                 <TableHead className="w-[60px]">Rank</TableHead>
                 <TableHead className="w-[200px]">Applicant</TableHead>
                 <TableHead className="w-[120px]">
@@ -581,11 +653,11 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
                 const highestScore =
                   applicant.statusAI === "completed"
                     ? Math.max(
-                        skillsScore,
-                        experienceScore,
-                        educationScore,
-                        timezoneScore,
-                      )
+                      skillsScore,
+                      experienceScore,
+                      educationScore,
+                      timezoneScore,
+                    )
                     : null;
 
                 // Only show rank for completed applicants
@@ -597,6 +669,18 @@ export function ApplicantsTable({ job }: ApplicantsTableProps) {
 
                 return (
                   <TableRow key={applicant.id}>
+                    {isSelectionMode && (
+                      <TableCell>
+                        {isCompleted && (
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            checked={selectedApplicants.includes(applicant.id)}
+                            onChange={() => handleSelect(applicant.id)}
+                          />
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell>
                       {rank ? (
                         <div className="text-primary text-lg font-bold">
