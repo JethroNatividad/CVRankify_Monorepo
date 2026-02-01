@@ -8,7 +8,6 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY apps/web/package.json ./apps/web/
 COPY apps/ai-worker/package.json ./apps/ai-worker/
-COPY apps/new-ai-worker/package.json ./apps/new-ai-worker/
 COPY apps/web/prisma ./apps/web/prisma
 
 # Install dependencies
