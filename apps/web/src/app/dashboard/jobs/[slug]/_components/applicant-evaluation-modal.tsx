@@ -237,7 +237,7 @@ export default function ApplicantEvaluationModal({
               color: #166534;
             }
             .badge-blue {
-              background: #dbeafe;
+              background: #dbeafe; 
               color: #1d4ed8;
             }
             .badge-red {
