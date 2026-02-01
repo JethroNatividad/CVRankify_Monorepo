@@ -1,5 +1,6 @@
 from ollama import Client
 import json
+import os
 
 
 def clean_response(response: str) -> str:
@@ -33,7 +34,8 @@ def query_ollama_model(model: str, content: str, think: bool = False, json_outpu
         RuntimeError: If model query fails
     """
     try:
-        ollama_client = Client()
+        host = os.getenv("OLLAMA_HOST")
+        ollama_client = Client(host=host)
 
         response = ollama_client.chat(
             model=model,
@@ -74,7 +76,8 @@ def stream_ollama_model(model: str, content: str, think: bool = False):
         str: Chunks of the response as they arrive
     """
     try:
-        ollama_client = Client()
+        host = os.getenv("OLLAMA_HOST")
+        ollama_client = Client(host=host)
         
         for chunk in ollama_client.chat(
             model=model,
