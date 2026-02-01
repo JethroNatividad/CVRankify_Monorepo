@@ -154,7 +154,7 @@ const JobPage = async ({ params }: JobPageProps) => {
             </p>
           </div>
           <div className="space-x-2">
-            <BulkUploadTest jobId={jobId} />
+            {/* <BulkUploadTest jobId={jobId} /> */}
             <ReScoreButton jobId={jobId} />
             <Button asChild>
               <Link href={`/dashboard/jobs/${jobId}/edit`}>
