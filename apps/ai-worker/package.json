@@ -2,6 +2,8 @@
   "name": "ai-worker",
   "private": true,
   "scripts": {
-    "setup": "python -m venv env && source env/bin/activate && pip install -r requirements.txt"
+    "setup": "python -m venv env && source env/bin/activate && pip install -r requirements.txt",
+    "dev": "env/bin/python -u dev.py",
+    "start": "env/bin/python -u main.py"
   }
 }

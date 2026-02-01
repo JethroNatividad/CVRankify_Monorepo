@@ -71,9 +71,9 @@ services:
     networks:
       - cvrankify-network
 
-  new-ai-worker:
+  ai-worker:
     build:
-      context: apps/new-ai-worker
+      context: apps/ai-worker
       dockerfile: Dockerfile
     container_name: cvrankify-ai-worker
     restart: unless-stopped
