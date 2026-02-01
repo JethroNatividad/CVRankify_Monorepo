@@ -1,0 +1,27 @@
+node_modules
+.next
+build
+dist
+.git
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Python
+env/
+venv/
+__pycache__/
+*.pyc
+
+# Ignore other apps mainly to speed up web build (COPY . .)
+# But we need their package.json for workspace resolution
+apps/ai-worker/
+!apps/ai-worker/package.json
+apps/new-ai-worker/
+!apps/new-ai-worker/package.json
