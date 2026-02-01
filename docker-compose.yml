@@ -12,6 +12,8 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     restart: unless-stopped
+    networks:
+      - cvrankify-network
 
   redis:
     image: redis:7-alpine
@@ -21,6 +23,8 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - cvrankify-network
 
   mysql:
     image: mysql:8.0
@@ -35,8 +39,70 @@ services:
       MYSQL_PASSWORD: cvrankify
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - cvrankify-network
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: cvrankify-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: mysql://cvrankify:cvrankify@mysql:3306/cvrankify
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET_NAME: cvrankify-resumes
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_QUEUE_NAME: cvrankify-jobs
+      AUTH_SECRET: "dY1ODB85Adp9RNLDuiNIMQvAPXyCal96b6R4JK4vNhY="
+      AI_SERVICE_API_KEY: "dY1Oasda4234DB85Adp9RNLDasdasdaduiNIMQvAPXyCal96b6aaadR4JK4vNhY"
+      AUTH_TRUST_HOST: "http://localhost:3000"
+      NODE_ENV: production
+    depends_on:
+      - mysql
+      - redis
+      - minio
+    networks:
+      - cvrankify-network
+
+  new-ai-worker:
+    build:
+      context: apps/new-ai-worker
+      dockerfile: Dockerfile
+    container_name: cvrankify-ai-worker
+    restart: unless-stopped
+    environment:
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET_NAME: cvrankify-resumes
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_QUEUE_NAME: cvrankify-jobs
+      AI_SERVICE_API_KEY: "dY1Oasda4234DB85Adp9RNLDasdasdaduiNIMQvAPXyCal96b6aaadR4JK4vNhY"
+      API_BASE_URL: http://web:3000
+      OLLAMA_HOST: ${PROD_OLLAMA_HOST:-http://host.docker.internal:11434}
+    depends_on:
+      - redis
+      - minio
+      - web
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - cvrankify-network
 
 volumes:
   minio_data:
   redis_data:
   mysql_data:
+
+networks:
+  cvrankify-network:
+    driver: bridge
