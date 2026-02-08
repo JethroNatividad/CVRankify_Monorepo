@@ -4,6 +4,7 @@ import signal
 from src.config.settings import get_settings
 from src.workers.extraction_worker import extraction_worker
 from src.workers.scoring_worker import scoring_worker
+from src.utils.ollama import preload_models
 
 async def process(job, job_token):
     """Route jobs to appropriate handlers based on job name"""
@@ -27,6 +28,9 @@ async def main():
     # Load settings
     settings = get_settings()
     redis_url = f"redis://{settings.redis_host}:{settings.redis_port}"
+    
+    # Preload Ollama models to avoid reload delays
+    await asyncio.to_thread(preload_models)
     
     # Create an event that will be triggered for shutdown
     shutdown_event = asyncio.Event()

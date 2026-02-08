@@ -3,6 +3,18 @@ import json
 import os
 
 
+# Singleton Ollama client instance
+_ollama_client = None
+
+def get_ollama_client():
+    """Get or create the singleton Ollama client instance."""
+    global _ollama_client
+    if _ollama_client is None:
+        host = os.getenv("OLLAMA_HOST")
+        _ollama_client = Client(host=host)
+    return _ollama_client
+
+
 def clean_response(response: str) -> str:
     response = response.split("</think>")[-1]
     # if response has ```json ... ```
@@ -34,8 +46,7 @@ def query_ollama_model(model: str, content: str, think: bool = False, json_outpu
         RuntimeError: If model query fails
     """
     try:
-        host = os.getenv("OLLAMA_HOST")
-        ollama_client = Client(host=host)
+        ollama_client = get_ollama_client()
 
         response = ollama_client.chat(
             model=model,
@@ -63,6 +74,42 @@ def query_ollama_model(model: str, content: str, think: bool = False, json_outpu
         raise RuntimeError(error_msg) from e
 
 
+def preload_models():
+    """
+    Preload all Ollama models used by the application.
+    This keeps models in memory and avoids reload delays on first use.
+    """
+    models_to_preload = [
+        "edu-timezone-extractor:latest",
+        "skills-extractor:latest", 
+        "experience-extractor:latest",
+        "edu-match:latest",
+        "skills_score:latest",
+        "exp_relevance_eval:latest"
+    ]
+    
+    print("Preloading Ollama models...")
+    ollama_client = get_ollama_client()
+    
+    # Simple test prompt to warm up each model
+    test_prompt = "test"
+    
+    for model in models_to_preload:
+        try:
+            print(f"  Loading {model}...")
+            # Make a simple call to load the model into memory
+            ollama_client.chat(
+                model=model,
+                messages=[{"role": "user", "content": test_prompt}],
+                think=False
+            )
+            print(f"  ✓ {model} loaded")
+        except Exception as e:
+            print(f"  ✗ Failed to load {model}: {str(e)}")
+    
+    print("Model preloading complete!\n")
+
+
 def stream_ollama_model(model: str, content: str, think: bool = False):
     """
     Stream an Ollama model response in real-time.
@@ -76,8 +123,7 @@ def stream_ollama_model(model: str, content: str, think: bool = False):
         str: Chunks of the response as they arrive
     """
     try:
-        host = os.getenv("OLLAMA_HOST")
-        ollama_client = Client(host=host)
+        ollama_client = get_ollama_client()
         
         for chunk in ollama_client.chat(
             model=model,
