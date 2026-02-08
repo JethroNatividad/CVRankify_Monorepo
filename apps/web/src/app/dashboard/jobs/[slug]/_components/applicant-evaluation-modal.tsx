@@ -371,7 +371,7 @@ export default function ApplicantEvaluationModal({
                       <span class="skill-reason"> - ${s.reason}${s.matchType === "implied" && s.applicantSkill ? ` <span style="color: #2563eb">(from ${s.applicantSkill})</span>` : ""}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                      <span style="font-size: 9px; color: #666;">${(Number(s.score) * 100).toFixed(0)}%</span>
+                      <span style="font-size: 9px; color: #666;">${Number(s.score) * (job.skills.find((skill) => skill.name === s.jobSkill)?.weight ?? 0)}/${job.skills.find((skill) => skill.name === s.jobSkill)?.weight ?? 0}</span>
                       <span class="badge ${s.matchType === "explicit" ? "badge-green" : s.matchType === "implied" ? "badge-blue" : "badge-red"}">${s.matchType.charAt(0).toUpperCase() + s.matchType.slice(1)}</span>
                     </div>
                   </div>
