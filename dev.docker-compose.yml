@@ -21,7 +21,6 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    networks:
 
   mysql:
     image: mysql:8.0
