@@ -88,10 +88,16 @@ export const applicantRouter = createTRPCRouter({
         },
       });
 
-      await resumeQueue.add("process-resume", {
-        applicantId: applicant.id,
-        resumePath: input.resumeFileName,
-      });
+      await resumeQueue.add(
+        "process-resume",
+        {
+          applicantId: applicant.id,
+          resumePath: input.resumeFileName,
+        },
+        {
+          priority: 5,
+        },
+      );
 
       return { success: true, id: applicant.id };
     }),
@@ -144,10 +150,16 @@ export const applicantRouter = createTRPCRouter({
       }
 
       // Re-add to the queue
-      await resumeQueue.add("process-resume", {
-        applicantId: applicant.id,
-        resumePath: applicant.resume,
-      });
+      await resumeQueue.add(
+        "process-resume",
+        {
+          applicantId: applicant.id,
+          resumePath: applicant.resume,
+        },
+        {
+          priority: 5,
+        },
+      );
 
       // Update statusAI to 'pending' if it was 'failed'
       await ctx.db.applicant.update({
@@ -383,11 +395,17 @@ export const applicantRouter = createTRPCRouter({
         data: { statusAI: "processing" },
       });
 
-      await resumeQueue.add("score-applicant", {
-        applicantId: applicant.id,
-        applicantData: JSON.stringify(applicant),
-        jobData: JSON.stringify(job),
-      });
+      await resumeQueue.add(
+        "score-applicant",
+        {
+          applicantId: applicant.id,
+          applicantData: JSON.stringify(applicant),
+          jobData: JSON.stringify(job),
+        },
+        {
+          priority: 1, // Higher priority for scoring
+        },
+      );
 
       return { success: true };
     }),
@@ -522,10 +540,16 @@ export const applicantRouter = createTRPCRouter({
       }
 
       // Re-add to the queue
-      await resumeQueue.add("process-resume", {
-        applicantId: applicant.id,
-        resumePath: applicant.resume,
-      });
+      await resumeQueue.add(
+        "process-resume",
+        {
+          applicantId: applicant.id,
+          resumePath: applicant.resume,
+        },
+        {
+          priority: 5,
+        },
+      );
 
       // Update statusAI to 'pending' if it was 'failed'
       await ctx.db.applicant.update({
@@ -629,10 +653,16 @@ export const applicantRouter = createTRPCRouter({
         });
 
         // Add to resume processing queue
-        await resumeQueue.add("process-resume", {
-          applicantId: applicant.id,
-          resumePath: resume.minioPath,
-        });
+        await resumeQueue.add(
+          "process-resume",
+          {
+            applicantId: applicant.id,
+            resumePath: resume.minioPath,
+          },
+          {
+            priority: 5,
+          },
+        );
 
         createdApplicants.push(applicant);
       }

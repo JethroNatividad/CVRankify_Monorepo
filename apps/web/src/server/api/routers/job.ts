@@ -524,10 +524,16 @@ export const jobRouter = createTRPCRouter({
         });
 
         // Add to queue - we've already filtered for applicants with resumes
-        return resumeQueue.add("process-resume", {
-          applicantId: applicant.id,
-          resumePath: applicant.resume,
-        });
+        return resumeQueue.add(
+          "process-resume",
+          {
+            applicantId: applicant.id,
+            resumePath: applicant.resume,
+          },
+          {
+            priority: 5,
+          },
+        );
       });
 
       await Promise.all(queuePromises);
@@ -578,11 +584,17 @@ export const jobRouter = createTRPCRouter({
           data: { statusAI: "processing" },
         });
 
-        return resumeQueue.add("score-applicant", {
-          applicantId: applicant.id,
-          applicantData: JSON.stringify(applicant),
-          jobData: JSON.stringify(job),
-        });
+        return resumeQueue.add(
+          "score-applicant",
+          {
+            applicantId: applicant.id,
+            applicantData: JSON.stringify(applicant),
+            jobData: JSON.stringify(job),
+          },
+          {
+            priority: 1,
+          },
+        );
       });
 
       await Promise.all(queuePromises);
@@ -590,6 +602,57 @@ export const jobRouter = createTRPCRouter({
       return {
         success: true,
         queued: applicantsToProcess.length,
+      };
+    }),
+  reParseApplicants: protectedProcedure
+    .input(
+      z.object({
+        jobId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const job = await ctx.db.job.findUnique({
+        where: { id: input.jobId, createdById: ctx.session.user.id },
+        include: {
+          applicants: {
+            include: { experiences: true },
+          },
+          skills: true,
+        },
+      });
+
+      if (!job) {
+        throw new Error(
+          "Job not found or you don't have permission to access it",
+        );
+      }
+
+      // Queue all applicants for re-parsing
+      const queuePromises = job.applicants.map(async (applicant) => {
+        // Set statusAI to 'pending'
+        await ctx.db.applicant.update({
+          where: { id: applicant.id },
+          data: { statusAI: "pending" },
+        });
+
+        return resumeQueue.add(
+          "process-resume",
+          {
+            applicantId: applicant.id,
+            applicantData: JSON.stringify(applicant),
+            jobData: JSON.stringify(job),
+          },
+          {
+            priority: 5,
+          },
+        );
+      });
+
+      await Promise.all(queuePromises);
+
+      return {
+        success: true,
+        queued: job.applicants.length,
       };
     }),
 });
